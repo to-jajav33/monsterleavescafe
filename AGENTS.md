@@ -48,6 +48,10 @@ src/
     GameScene.ts
   entities/
     Entity.ts
+  scene/
+    LayoutPlane.ts
+    LayoutGui.ts
+    CafeSceneLayout.ts
   utils/
     math.ts
     canvas.ts

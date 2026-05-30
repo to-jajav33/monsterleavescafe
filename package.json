@@ -8,7 +8,8 @@
     "start": "bun ./index.ts"
   },
   "dependencies": {
-    "@babylonjs/core": "^8.0.0"
+    "@babylonjs/core": "^8.0.0",
+    "@babylonjs/gui": "8.56.2"
   },
   "devDependencies": {
     "@types/bun": "latest"
