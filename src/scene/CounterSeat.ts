@@ -3,7 +3,6 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 import { Vec2 } from "../utils/math.ts";
 
-import { LayoutGui } from "./LayoutGui.ts";
 import { LayoutLayer } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
@@ -21,18 +20,16 @@ export type SeatMarkerConfig = {
   role: SeatRole;
 };
 
-/** Counter seat placeholder with active vs queue styling. */
+/** Counter seat — labels baked on mesh textures at seat position. */
 export class SeatMarker {
   private readonly planes: LayoutPlane[] = [];
 
-  constructor(
-    scene: Scene,
-    gui: LayoutGui,
-    private readonly config: SeatMarkerConfig,
-  ) {
+  constructor(scene: Scene, config: SeatMarkerConfig) {
     const x = SEAT_X[config.index]!;
     const center = new Vec2(x, SEAT_Y);
     const isActive = config.role === "active";
+    const seatName =
+      config.index === 0 ? "L" : config.index === 1 ? "C" : "R";
 
     if (isActive) {
       this.planes.push(
@@ -57,26 +54,11 @@ export class SeatMarker {
         color: isActive
           ? new Color3(0.5, 0.58, 0.42)
           : new Color3(0.38, 0.42, 0.48),
+        label: isActive ? `ACTIVE\nSeat ${seatName}` : `QUEUE\nSeat ${seatName}`,
+        labelFont: isActive ? "bold 15px monospace" : "14px monospace",
+        labelTextColor: isActive ? "#ffe08a" : "#d8e0ec",
       }),
     );
-
-    gui.addLabel({
-      text: isActive ? "ACTIVE" : "QUEUE",
-      center: new Vec2(x, SEAT_Y + 38),
-      width: 120,
-      height: 22,
-      fontSize: isActive ? 14 : 12,
-      fontWeight: "bold",
-      color: isActive ? "#ffe08a" : "#b8c0cc",
-    });
-
-    gui.addLabel({
-      text: `Seat ${config.index === 0 ? "L" : config.index === 1 ? "C" : "R"}`,
-      center: new Vec2(x, SEAT_Y - 32),
-      width: 120,
-      height: 22,
-      fontSize: 14,
-    });
   }
 
   dispose(): void {

@@ -1,65 +1,67 @@
 import type { Scene } from "@babylonjs/core/scene";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
-
+import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Vec2 } from "../utils/math.ts";
+import type { GameEngine } from "../game/GameEngine.ts";
+import { DESIGN_HEIGHT } from "../game/GameEngine.ts";
 
 import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
-import {
-  LayoutGui,
-  parseFontSizePx,
-  parseFontWeight,
-} from "./LayoutGui.ts";
 import { LayoutLayer } from "./LayoutLayer.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
 
-type PanelConfig = LayoutPlaneConfig & {
-  label?: string;
-  labelFont?: string;
-};
+type PanelConfig = LayoutPlaneConfig;
 
 /**
  * Phase 1 mockup scene — layout, menu drinks, seat markers.
- * Positions tuned for 1280×720 orthographic space (origin = screen center).
+ * Labels live on mesh textures (design/world space), not screen GUI.
  */
 export class CafeSceneLayout {
   private readonly planes: LayoutPlane[] = [];
-  private readonly gui: LayoutGui;
   private readonly seatMarkers: SeatMarker[] = [];
   private menuBoard: MenuBoard | null = null;
+  private readonly updateOrtho: () => void;
 
-  constructor(private readonly scene: Scene) {
-    this.gui = new LayoutGui(scene);
+  constructor(
+    private readonly scene: Scene,
+    private readonly gameEngine: GameEngine,
+    private readonly camera: FreeCamera,
+  ) {
+    this.updateOrtho = () => this.applyOrthoForCanvas();
+    this.gameEngine.onResize(this.updateOrtho);
+    this.applyOrthoForCanvas();
     this.build();
   }
 
   dispose(): void {
+    this.gameEngine.offResize(this.updateOrtho);
     this.menuBoard?.dispose();
     this.menuBoard = null;
     for (const seat of this.seatMarkers) {
       seat.dispose();
     }
     this.seatMarkers.length = 0;
-    this.gui.dispose();
     for (const plane of this.planes) {
       plane.dispose();
     }
     this.planes.length = 0;
   }
 
+  /** Keep design-height units; widen ortho when the window is wider than 16:9. */
+  private applyOrthoForCanvas(): void {
+    const canvas = this.gameEngine.engine.getRenderingCanvas();
+    if (!canvas) return;
+    const aspect = canvas.width / canvas.height;
+    const halfH = DESIGN_HEIGHT / 2;
+    const halfW = halfH * aspect;
+    this.camera.orthoTop = halfH;
+    this.camera.orthoBottom = -halfH;
+    this.camera.orthoLeft = -halfW;
+    this.camera.orthoRight = halfW;
+  }
+
   private add(config: PanelConfig): void {
-    const { label, labelFont, ...planeConfig } = config;
-    this.planes.push(new LayoutPlane(this.scene, planeConfig));
-    if (label) {
-      this.gui.addLabel({
-        text: label,
-        center: planeConfig.center,
-        width: planeConfig.width,
-        height: planeConfig.height,
-        fontSize: parseFontSizePx(labelFont),
-        fontWeight: parseFontWeight(labelFont),
-      });
-    }
+    this.planes.push(new LayoutPlane(this.scene, config));
   }
 
   private build(): void {
@@ -70,7 +72,7 @@ export class CafeSceneLayout {
     this.buildCounter();
     this.buildSeats();
     this.buildExitFlow();
-    this.menuBoard = new MenuBoard(this.scene, this.gui);
+    this.menuBoard = new MenuBoard(this.scene);
     this.buildHideButton();
     this.buildBossBell();
   }
@@ -99,13 +101,13 @@ export class CafeSceneLayout {
     });
     this.add({
       name: "layout_window_glass",
-      center: new Vec2(0, 200),
-      width: 380,
-      height: 170,
+      center: new Vec2(0, 165),
+      width: 360,
+      height: 120,
       layer: LayoutLayer.decor,
       color: new Color3(0.32, 0.4, 0.52),
-      label: "(queue preview)",
-      labelFont: "18px monospace",
+      label: "queue preview",
+      labelFont: "16px monospace",
     });
   }
 
@@ -154,12 +156,11 @@ export class CafeSceneLayout {
     });
   }
 
-  /** Three seats — rightmost (R) = active; L/C = queue. */
   private buildSeats(): void {
     for (let i = 0; i < 3; i++) {
       const role = i === ACTIVE_SEAT_INDEX ? "active" : "queue";
       this.seatMarkers.push(
-        new SeatMarker(this.scene, this.gui, { index: i, role }),
+        new SeatMarker(this.scene, { index: i, role }),
       );
     }
   }

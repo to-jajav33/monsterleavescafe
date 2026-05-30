@@ -15,7 +15,7 @@ export class Game {
   start(): void {
     const canvas = getRequiredCanvas(this.canvasId);
     this.gameEngine = new GameEngine(canvas);
-    this.gameScene = new GameScene(this.gameEngine.engine);
+    this.gameScene = new GameScene(this.gameEngine);
 
     const engine = this.gameEngine.engine;
     engine.runRenderLoop(() => {
