@@ -55,6 +55,10 @@ src/
     SeatCustomer.ts
     OrderBubble.ts
     CafeSceneLayout.ts
+  input/
+    InputMap.ts
+    SceneInputSystem.ts
+    defaultBindings.ts
   utils/
     math.ts
     canvas.ts
@@ -66,7 +70,7 @@ src/
 - **Units**: 1 world unit ≈ 1 logical pixel at base resolution unless spec says otherwise.
 - **Base resolution** (design): `1280 × 720` — scale canvas via CSS; engine resize follows display size.
 - **Sprites / meshes**: prefer simple planes or GUI textures until asset pipeline is defined.
-- **Input**: pointer/keyboard mapped in dedicated systems (not implemented yet).
+- **Input**: Godot-style `InputMap` in `src/input/` — providers emit raw events; actions (`menu_slot_1`…`3`) drive gameplay. Default bindings: keys `1`/`2`/`3` + menu slot pointer pick.
 
 ## Game design specs
 

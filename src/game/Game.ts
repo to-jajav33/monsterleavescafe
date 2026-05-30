@@ -16,6 +16,10 @@ export class Game {
   start(): void {
     debugLog("Game.start()");
     const canvas = getRequiredCanvas(this.canvasId);
+    canvas.tabIndex = 0;
+    canvas.addEventListener("pointerdown", () => {
+      canvas.focus();
+    });
     this.gameEngine = new GameEngine(canvas);
     this.gameScene = new GameScene(this.gameEngine);
     debugLog("Game.start() complete");

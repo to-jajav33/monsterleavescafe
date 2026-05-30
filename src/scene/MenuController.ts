@@ -1,24 +1,20 @@
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
-import { ActionManager } from "@babylonjs/core/Actions/actionManager";
-import { ExecuteCodeAction } from "@babylonjs/core/Actions/directActions";
-import { PointerEventTypes } from "@babylonjs/core/Events/pointerEvents";
 import type { Observer } from "@babylonjs/core/Misc/observable";
 
 import type { Drink } from "../game/Drink.ts";
 import type { ServeResolver } from "../game/ServeResolver.ts";
-import type { SeatCustomer } from "./SeatCustomer.ts";
+import type { InputMap } from "../input/InputMap.ts";
+import { menuSlotActionToSlot } from "../input/InputTypes.ts";
+import type { InputSource } from "../input/InputTypes.ts";
 import { debugLog } from "../utils/debugLog.ts";
 
 import type { MenuBoard } from "./MenuBoard.ts";
 import { MENU_SLOT_HEIGHT, MENU_SLOT_WIDTH } from "./MenuBoard.ts";
 import { MenuHoldVisual } from "./MenuHoldVisual.ts";
+import type { SeatCustomer } from "./SeatCustomer.ts";
 
-type SlotBinding = {
+type SlotVisual = {
   slot: 1 | 2 | 3;
-  mesh: Mesh;
-  downAction: ExecuteCodeAction;
-  upAction: ExecuteCodeAction;
   holdVisual: MenuHoldVisual;
 };
 
@@ -28,22 +24,24 @@ type ActiveHold = {
   drink: Drink;
   elapsed: number;
   duration: number;
+  source: InputSource;
 };
 
 /**
- * Hold-to-serve on menu drink slots — Phase 2 item 2.
- * Release early or switch slot cancels; correct hold completes serve on active customer.
+ * Hold-to-serve driven by {@link InputMap} actions (menu_slot_1..3).
+ * Pointer and keyboard are wired via {@link SceneInputSystem} providers.
  */
 export class MenuController {
-  private readonly bindings: SlotBinding[] = [];
+  private readonly visuals: SlotVisual[] = [];
   private hold: ActiveHold | null = null;
   private readonly renderObserver: Observer<Scene>;
-  private readonly pointerObserver: Observer<unknown>;
+  private readonly unsubscribeAction: () => void;
 
   constructor(
     private readonly scene: Scene,
     menuBoard: MenuBoard,
     private readonly resolver: ServeResolver,
+    inputMap: InputMap,
   ) {
     for (const slot of [1, 2, 3] as const) {
       const mesh = menuBoard.getSlotMesh(slot);
@@ -53,58 +51,35 @@ export class MenuController {
       }
 
       const drink = menuBoard.getDrinkForSlot(slot);
-      if (!mesh.actionManager) {
-        mesh.actionManager = new ActionManager(scene);
-      }
-
-      const downAction = new ExecuteCodeAction(
-        { trigger: ActionManager.OnPickDownTrigger },
-        () => {
-          this.onSlotDown(slot);
-        },
-      );
-      const upAction = new ExecuteCodeAction(
-        { trigger: ActionManager.OnPickUpTrigger },
-        () => {
-          this.onSlotUp(slot);
-        },
-      );
-      mesh.actionManager.registerAction(downAction);
-      mesh.actionManager.registerAction(upAction);
-
-      const holdVisual = new MenuHoldVisual(
-        scene,
-        mesh,
-        MENU_SLOT_WIDTH,
-        MENU_SLOT_HEIGHT,
-        drink.menuColor,
-      );
-
-      this.bindings.push({
+      this.visuals.push({
         slot,
-        mesh,
-        downAction,
-        upAction,
-        holdVisual,
+        holdVisual: new MenuHoldVisual(
+          scene,
+          mesh,
+          MENU_SLOT_WIDTH,
+          MENU_SLOT_HEIGHT,
+          drink.menuColor,
+        ),
       });
-      debugLog("MenuController: hold pick enabled for slot", slot);
     }
+
+    this.unsubscribeAction = inputMap.onAction((action, phase, event) => {
+      const slot = menuSlotActionToSlot(action);
+      if (phase === "pressed") {
+        this.onSlotDown(slot, event.source);
+      } else {
+        this.onSlotUp(slot, event.source);
+      }
+    });
 
     this.renderObserver = scene.onBeforeRenderObservable.add(() => {
       this.tickHold();
     });
 
-    this.pointerObserver = scene.onPointerObservable.add((pointerInfo) => {
-      if (
-        pointerInfo.type === PointerEventTypes.POINTERUP &&
-        this.hold !== null
-      ) {
-        this.cancelHold("released");
-      }
-    });
+    debugLog("MenuController listening for menu_slot_1..3 actions");
   }
 
-  private onSlotDown(slot: 1 | 2 | 3): void {
+  private onSlotDown(slot: 1 | 2 | 3, source: InputSource): void {
     this.cancelHold("switched slot");
 
     const result = this.resolver.evaluateMenuPress(slot);
@@ -119,16 +94,18 @@ export class MenuController {
       drink: result.drink,
       elapsed: 0,
       duration: result.drink.holdDurationSeconds,
+      source,
     };
-    this.getBinding(slot)?.holdVisual.setProgress(0);
+    this.getVisual(slot)?.holdVisual.setProgress(0);
     debugLog("Menu hold started", {
       slot,
       drink: result.drink.shortLabel,
       seconds: result.drink.holdDurationSeconds,
+      source,
     });
   }
 
-  private onSlotUp(slot: 1 | 2 | 3): void {
+  private onSlotUp(slot: 1 | 2 | 3, _source: InputSource): void {
     if (this.hold?.slot === slot) {
       this.cancelHold("released early");
     }
@@ -142,7 +119,7 @@ export class MenuController {
     const dt = this.scene.getEngine().getDeltaTime() / 1000;
     this.hold.elapsed += dt;
     const progress = Math.min(1, this.hold.elapsed / this.hold.duration);
-    this.getBinding(this.hold.slot)?.holdVisual.setProgress(progress);
+    this.getVisual(this.hold.slot)?.holdVisual.setProgress(progress);
 
     if (this.hold.elapsed >= this.hold.duration) {
       this.completeHold();
@@ -155,7 +132,7 @@ export class MenuController {
       return;
     }
 
-    this.getBinding(active.slot)?.holdVisual.hide();
+    this.getVisual(active.slot)?.holdVisual.hide();
     this.hold = null;
 
     active.customer.flashServeMatch();
@@ -172,25 +149,23 @@ export class MenuController {
     }
 
     const slot = this.hold.slot;
-    this.getBinding(slot)?.holdVisual.hide();
+    this.getVisual(slot)?.holdVisual.hide();
     this.hold = null;
     debugLog("Menu hold cancelled:", reason);
   }
 
-  private getBinding(slot: 1 | 2 | 3): SlotBinding | undefined {
-    return this.bindings.find((b) => b.slot === slot);
+  private getVisual(slot: 1 | 2 | 3): SlotVisual | undefined {
+    return this.visuals.find((v) => v.slot === slot);
   }
 
   dispose(): void {
     this.cancelHold("dispose");
+    this.unsubscribeAction();
     this.scene.onBeforeRenderObservable.remove(this.renderObserver);
-    this.scene.onPointerObservable.remove(this.pointerObserver);
 
-    for (const { mesh, downAction, upAction, holdVisual } of this.bindings) {
-      mesh.actionManager?.unregisterAction(downAction);
-      mesh.actionManager?.unregisterAction(upAction);
+    for (const { holdVisual } of this.visuals) {
       holdVisual.dispose();
     }
-    this.bindings.length = 0;
+    this.visuals.length = 0;
   }
 }

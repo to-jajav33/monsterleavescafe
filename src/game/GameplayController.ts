@@ -1,5 +1,6 @@
 import type { Scene } from "@babylonjs/core/scene";
 
+import { SceneInputSystem } from "../input/SceneInputSystem.ts";
 import type { MenuBoard } from "../scene/MenuBoard.ts";
 import type { SeatCustomer } from "../scene/SeatCustomer.ts";
 import { MenuController } from "../scene/MenuController.ts";
@@ -12,13 +13,20 @@ import { ServeResolver } from "./ServeResolver.ts";
 export class GameplayController {
   private readonly queue: CounterQueue;
   private readonly resolver: ServeResolver;
+  private readonly input: SceneInputSystem;
   private readonly menu: MenuController;
 
   constructor(scene: Scene, menuBoard: MenuBoard, customers: SeatCustomer[]) {
     this.queue = new CounterQueue(customers);
     this.resolver = new ServeResolver(this.queue);
     this.applyOrderBubbleStyles();
-    this.menu = new MenuController(scene, menuBoard, this.resolver);
+    this.input = new SceneInputSystem(scene, menuBoard);
+    this.menu = new MenuController(
+      scene,
+      menuBoard,
+      this.resolver,
+      this.input.map,
+    );
     debugLog("GameplayController ready", {
       activeSeat: this.queue.getActiveSeatIndex(),
       activeOrder: this.queue.getActiveCustomer()?.drinkSlot,
@@ -37,5 +45,6 @@ export class GameplayController {
 
   dispose(): void {
     this.menu.dispose();
+    this.input.dispose();
   }
 }
