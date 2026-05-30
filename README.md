@@ -1,15 +1,23 @@
-# monsterleavescafe
+# Monster Leaves Cafe
 
-To install dependencies:
+2D game using Babylon.js, TypeScript, and Bun. Project conventions and specs live in [AGENTS.md](./AGENTS.md).
 
-```bash
-bun install
-```
-
-To run:
+## Setup
 
 ```bash
-bun run index.ts
+npx bun install
 ```
 
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+## Run
+
+```bash
+npx bun run dev
+```
+
+Open the URL printed in the terminal (default Bun port).
+
+## Structure
+
+- `src/game/` — `Game`, `GameEngine`, `GameScene` (OOP core)
+- `src/entities/` — `Entity` base and game objects
+- `src/utils/` — stateless helpers (`math`, `canvas`)
