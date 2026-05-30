@@ -6,6 +6,7 @@ import { Camera } from "@babylonjs/core/Cameras/camera";
 import { CafeSceneLayout } from "../scene/CafeSceneLayout.ts";
 
 import type { GameEngine } from "./GameEngine.ts";
+import { DESIGN_HEIGHT, DESIGN_WIDTH } from "./GameEngine.ts";
 
 /** Babylon scene configured for orthographic 2D. */
 export class GameScene {
@@ -28,6 +29,10 @@ export class GameScene {
       this.scene,
     );
     camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
+    camera.orthoLeft = -DESIGN_WIDTH / 2;
+    camera.orthoRight = DESIGN_WIDTH / 2;
+    camera.orthoTop = DESIGN_HEIGHT / 2;
+    camera.orthoBottom = -DESIGN_HEIGHT / 2;
     camera.setTarget(Vector3.Zero());
     return camera;
   }

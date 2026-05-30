@@ -3,7 +3,8 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Vec2 } from "../utils/math.ts";
 import type { GameEngine } from "../game/GameEngine.ts";
-import { DESIGN_HEIGHT } from "../game/GameEngine.ts";
+import { DESIGN_HEIGHT, DESIGN_WIDTH } from "../game/GameEngine.ts";
+import { createContainViewport } from "../utils/containViewport.ts";
 
 import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
 import { LayoutLayer } from "./LayoutLayer.ts";
@@ -27,9 +28,9 @@ export class CafeSceneLayout {
     private readonly gameEngine: GameEngine,
     private readonly camera: FreeCamera,
   ) {
-    this.updateOrtho = () => this.applyOrthoForCanvas();
+    this.updateOrtho = () => this.applyContainLayout();
     this.gameEngine.onResize(this.updateOrtho);
-    this.applyOrthoForCanvas();
+    this.applyContainLayout();
     this.build();
   }
 
@@ -47,17 +48,23 @@ export class CafeSceneLayout {
     this.planes.length = 0;
   }
 
-  /** Keep design-height units; widen ortho when the window is wider than 16:9. */
-  private applyOrthoForCanvas(): void {
+  /**
+   * Fixed 1280×720 world units + viewport letterbox (like CSS object-fit: contain).
+   */
+  private applyContainLayout(): void {
     const canvas = this.gameEngine.engine.getRenderingCanvas();
     if (!canvas) return;
-    const aspect = canvas.width / canvas.height;
+
+    const halfW = DESIGN_WIDTH / 2;
     const halfH = DESIGN_HEIGHT / 2;
-    const halfW = halfH * aspect;
-    this.camera.orthoTop = halfH;
-    this.camera.orthoBottom = -halfH;
     this.camera.orthoLeft = -halfW;
     this.camera.orthoRight = halfW;
+    this.camera.orthoTop = halfH;
+    this.camera.orthoBottom = -halfH;
+    this.camera.viewport = createContainViewport(
+      canvas.width,
+      canvas.height,
+    );
   }
 
   private add(config: PanelConfig): void {
@@ -159,9 +166,7 @@ export class CafeSceneLayout {
   private buildSeats(): void {
     for (let i = 0; i < 3; i++) {
       const role = i === ACTIVE_SEAT_INDEX ? "active" : "queue";
-      this.seatMarkers.push(
-        new SeatMarker(this.scene, { index: i, role }),
-      );
+      this.seatMarkers.push(new SeatMarker(this.scene, { index: i, role }));
     }
   }
 
