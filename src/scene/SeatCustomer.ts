@@ -6,6 +6,7 @@ import { PlaceholderMonster } from "../entities/Monster.ts";
 import { debugLog } from "../utils/debugLog.ts";
 import {
   animateMeshTargets,
+  killMeshTweens,
   type MeshMoveTarget,
 } from "../utils/animateMeshes.ts";
 import { Vec2 } from "../utils/math.ts";
@@ -135,7 +136,10 @@ export class SeatCustomer {
         y: BUBBLE_CENTER_Y,
       });
     }
-    return animateMeshTargets(this.scene, targets, durationSeconds).then(() => {
+    return animateMeshTargets(targets, {
+      duration: durationSeconds,
+      ease: "power2.inOut",
+    }).then(() => {
       this.orderBubble?.setCenter(x, BUBBLE_CENTER_Y);
     });
   }
@@ -146,10 +150,22 @@ export class SeatCustomer {
       x: EXIT_X,
       y: t.y,
     }));
-    return animateMeshTargets(this.scene, targets, durationSeconds);
+    return animateMeshTargets(targets, {
+      duration: durationSeconds,
+      ease: "power2.in",
+    });
+  }
+
+  private getAnimMeshes() {
+    const meshes = this.planes.map((p) => p.mesh);
+    if (this.orderBubble) {
+      meshes.push(this.orderBubble.getMesh());
+    }
+    return meshes;
   }
 
   dispose(): void {
+    killMeshTweens(this.getAnimMeshes());
     this.orderBubble?.dispose();
     this.orderBubble = null;
     for (const plane of this.planes) {

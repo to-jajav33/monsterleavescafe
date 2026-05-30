@@ -1,5 +1,5 @@
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { Scene } from "@babylonjs/core/scene";
+import gsap from "gsap";
 
 export type MeshMoveTarget = {
   mesh: Mesh;
@@ -7,41 +7,48 @@ export type MeshMoveTarget = {
   y: number;
 };
 
+export type MeshMoveOptions = {
+  duration: number;
+  /** GSAP ease name — https://gsap.com/docs/v3/Eases */
+  ease?: string;
+};
+
+const DEFAULT_EASE = "power2.inOut";
+
 /**
- * Linear XY move for one or more meshes over a fixed duration.
+ * Move one or more Babylon mesh positions in parallel via GSAP.
  */
 export function animateMeshTargets(
-  scene: Scene,
   targets: readonly MeshMoveTarget[],
-  durationSeconds: number,
+  options: MeshMoveOptions,
 ): Promise<void> {
   if (targets.length === 0) {
     return Promise.resolve();
   }
 
-  const starts = targets.map((t) => ({
-    x: t.mesh.position.x,
-    y: t.mesh.position.y,
-  }));
-
-  let elapsed = 0;
+  const { duration, ease = DEFAULT_EASE } = options;
 
   return new Promise((resolve) => {
-    const observer = scene.onBeforeRenderObservable.add(() => {
-      elapsed += scene.getEngine().getDeltaTime() / 1000;
-      const t = Math.min(1, elapsed / durationSeconds);
+    const timeline = gsap.timeline({ onComplete: resolve });
 
-      for (let i = 0; i < targets.length; i++) {
-        const start = starts[i]!;
-        const end = targets[i]!;
-        end.mesh.position.x = start.x + (end.x - start.x) * t;
-        end.mesh.position.y = start.y + (end.y - start.y) * t;
-      }
-
-      if (t >= 1) {
-        scene.onBeforeRenderObservable.remove(observer);
-        resolve();
-      }
-    });
+    for (const target of targets) {
+      timeline.to(
+        target.mesh.position,
+        {
+          x: target.x,
+          y: target.y,
+          duration,
+          ease,
+        },
+        0,
+      );
+    }
   });
+}
+
+/** Stop in-flight tweens before disposing meshes. */
+export function killMeshTweens(meshes: readonly Mesh[]): void {
+  for (const mesh of meshes) {
+    gsap.killTweensOf(mesh.position);
+  }
 }

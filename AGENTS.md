@@ -12,6 +12,7 @@ Living document for AI agents and contributors. Update this file when specs, arc
 |-------|--------|
 | Runtime / dev server | Bun via `npx bun` (`Bun.serve`, HTML imports) |
 | Renderer | `@babylonjs/core` |
+| Motion | `gsap` — mesh position tweens in `src/utils/animateMeshes.ts` |
 | Language | TypeScript (strict) |
 | Structure | Object-oriented classes under `src/` |
 | Utilities | Pure helpers in `src/utils/` (no game state) |
