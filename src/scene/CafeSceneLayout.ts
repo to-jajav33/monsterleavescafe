@@ -4,7 +4,10 @@ import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Vec2 } from "../utils/math.ts";
 import type { GameEngine } from "../game/GameEngine.ts";
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from "../game/GameEngine.ts";
+import { debugLog } from "../utils/debugLog.ts";
+import { logCameraAndCanvas, logSceneMeshes } from "../utils/sceneDebug.ts";
 import { createContainViewport } from "../utils/containViewport.ts";
+import { DRINK_MENU } from "../game/Drink.ts";
 
 import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
 import { LayoutLayer } from "./LayoutLayer.ts";
@@ -28,10 +31,16 @@ export class CafeSceneLayout {
     private readonly gameEngine: GameEngine,
     private readonly camera: FreeCamera,
   ) {
-    this.updateOrtho = () => this.applyContainLayout();
+    debugLog("CafeSceneLayout.constructor");
+    this.updateOrtho = () => {
+      debugLog("resize → applyContainLayout");
+      this.applyContainLayout();
+      logCameraAndCanvas(this.scene, this.camera, this.gameEngine.engine);
+    };
     this.gameEngine.onResize(this.updateOrtho);
     this.applyContainLayout();
     this.build();
+    this.logBuildSummary();
   }
 
   dispose(): void {
@@ -79,9 +88,22 @@ export class CafeSceneLayout {
     this.buildCounter();
     this.buildSeats();
     this.buildExitFlow();
+    debugLog("CafeSceneLayout.build → creating MenuBoard");
     this.menuBoard = new MenuBoard(this.scene);
+    debugLog("CafeSceneLayout.build → MenuBoard planeCount", this.menuBoard.planeCount);
     this.buildHideButton();
     this.buildBossBell();
+  }
+
+  private logBuildSummary(): void {
+    debugLog("=== CafeSceneLayout build summary ===");
+    debugLog("DRINK_MENU from Drink.ts:", DRINK_MENU.length, "items");
+    debugLog("Tracked layout planes:", this.planes.length);
+    debugLog("Seat markers:", this.seatMarkers.length);
+    debugLog("MenuBoard planeCount:", this.menuBoard?.planeCount ?? "null");
+    logCameraAndCanvas(this.scene, this.camera, this.gameEngine.engine);
+    logSceneMeshes(this.scene);
+    debugLog("=== end summary ===");
   }
 
   private buildBackWall(): void {
@@ -186,10 +208,11 @@ export class CafeSceneLayout {
   private buildHideButton(): void {
     this.add({
       name: "layout_hide_button",
-      center: new Vec2(0, -310),
+      center: new Vec2(0, -250),
       width: 130,
       height: 52,
       layer: LayoutLayer.ui,
+      depthOffset: 0.05,
       color: new Color3(0.48, 0.52, 0.62),
       label: "Hide",
       labelFont: "bold 22px monospace",
@@ -199,10 +222,11 @@ export class CafeSceneLayout {
   private buildBossBell(): void {
     this.add({
       name: "layout_boss_bell",
-      center: new Vec2(520, -300),
+      center: new Vec2(520, -250),
       width: 110,
       height: 90,
       layer: LayoutLayer.ui,
+      depthOffset: 0.06,
       color: new Color3(0.7, 0.62, 0.32),
       label: "BOSS",
       labelFont: "bold 24px monospace",

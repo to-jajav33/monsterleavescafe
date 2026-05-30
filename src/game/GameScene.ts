@@ -4,6 +4,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Camera } from "@babylonjs/core/Cameras/camera";
 import { CafeSceneLayout } from "../scene/CafeSceneLayout.ts";
+import { debugLog } from "../utils/debugLog.ts";
 
 import type { GameEngine } from "./GameEngine.ts";
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from "./GameEngine.ts";
@@ -15,6 +16,7 @@ export class GameScene {
   private layout: CafeSceneLayout | null = null;
 
   constructor(private readonly gameEngine: GameEngine) {
+    debugLog("GameScene.constructor");
     this.scene = new Scene(gameEngine.engine);
     this.scene.clearColor = new Color4(0.18, 0.17, 0.2, 1);
     this.camera = this.createCamera();

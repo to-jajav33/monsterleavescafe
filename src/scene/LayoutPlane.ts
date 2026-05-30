@@ -6,6 +6,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 
+import { debugLog } from "../utils/debugLog.ts";
 import { Vec2 } from "../utils/math.ts";
 
 export type LayoutPlaneConfig = {
@@ -15,6 +16,8 @@ export type LayoutPlaneConfig = {
   height: number;
   /** Babylon renderingGroupId — higher draws on top (2D layer order). */
   layer: number;
+  /** Nudge along Z within a layer to avoid coplanar z-fighting (default 0). */
+  depthOffset?: number;
   color: Color3;
   /** Drawn on the mesh texture — moves/scales with this plane (not screen GUI). */
   label?: string;
@@ -39,15 +42,28 @@ export class LayoutPlane {
     private readonly scene: Scene,
     private readonly config: LayoutPlaneConfig,
   ) {
-    const { name, center, width, height, layer } = config;
+    const { name, center, width, height, layer, depthOffset = 0 } = config;
     this.mesh = MeshBuilder.CreatePlane(
       name,
       { width, height },
       scene,
     );
-    this.mesh.position = new Vector3(center.x, center.y, 0);
+    // Layer-based Z keeps 2D stacks ordered; counter was burying UI at the same Z
+    const z = layer * 0.1 + depthOffset;
+    this.mesh.position = new Vector3(center.x, center.y, z);
     this.mesh.renderingGroupId = layer;
     this.applyMaterial();
+
+    if (/menu|hide|boss/i.test(name)) {
+      debugLog("LayoutPlane created:", {
+        name,
+        center: { x: center.x, y: center.y },
+        size: { width, height },
+        layer,
+        z,
+        label: config.label ?? "(none)",
+      });
+    }
   }
 
   get center(): Vec2 {
@@ -63,6 +79,7 @@ export class LayoutPlane {
     const mat = new StandardMaterial(`${this.config.name}_mat`, this.scene);
     mat.disableLighting = true;
     mat.backFaceCulling = true;
+    mat.disableDepthWrite = true;
 
     if (this.config.label) {
       const tex = this.createLabelTexture();
