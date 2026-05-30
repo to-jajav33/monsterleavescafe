@@ -48,8 +48,12 @@ src/
     GameScene.ts
   entities/
     Entity.ts
+  entities/
+    Monster.ts
   scene/
     LayoutPlane.ts
+    SeatCustomer.ts
+    OrderBubble.ts
     CafeSceneLayout.ts
   utils/
     math.ts
@@ -86,7 +90,7 @@ See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
 - [x] Project scaffold: Bun + Babylon 2D ortho scene
 - [x] OOP skeleton: `Game`, `GameEngine`, `GameScene`, `Entity`
 - [x] `src/utils/` helpers (math, canvas)
-- [ ] Static mockup scene — Phase 1 (layout + menu + seats done; monsters next)
+- [x] Static mockup scene — Phase 1 complete
 - [ ] Queue (active by Exit) + hold-to-serve — Phase 2
 - [ ] Rage, 50% mind-change, burst, lunge, strikes — Phase 3
 - [ ] 3:00 timer, Boss (3 calls), win/lose — Phase 4

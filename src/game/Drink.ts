@@ -34,3 +34,11 @@ export const DRINK_MENU: readonly Drink[] = [
     new Color3(0.48, 0.35, 0.72),
   ),
 ] as const;
+
+export function getDrinkBySlot(slot: 1 | 2 | 3): Drink {
+  const drink = DRINK_MENU.find((d) => d.slot === slot);
+  if (!drink) {
+    throw new Error(`Unknown drink slot: ${slot}`);
+  }
+  return drink;
+}

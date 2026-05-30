@@ -10,6 +10,10 @@ import { createContainViewport } from "../utils/containViewport.ts";
 import { DRINK_MENU } from "../game/Drink.ts";
 
 import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
+import {
+  PHASE1_DEMO_CUSTOMERS,
+  SeatCustomer,
+} from "./SeatCustomer.ts";
 import { LayoutLayer } from "./LayoutLayer.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
@@ -23,6 +27,7 @@ type PanelConfig = LayoutPlaneConfig;
 export class CafeSceneLayout {
   private readonly planes: LayoutPlane[] = [];
   private readonly seatMarkers: SeatMarker[] = [];
+  private readonly seatCustomers: SeatCustomer[] = [];
   private menuBoard: MenuBoard | null = null;
   private readonly updateOrtho: () => void;
 
@@ -47,6 +52,10 @@ export class CafeSceneLayout {
     this.gameEngine.offResize(this.updateOrtho);
     this.menuBoard?.dispose();
     this.menuBoard = null;
+    for (const customer of this.seatCustomers) {
+      customer.dispose();
+    }
+    this.seatCustomers.length = 0;
     for (const seat of this.seatMarkers) {
       seat.dispose();
     }
@@ -87,6 +96,7 @@ export class CafeSceneLayout {
     this.buildExitSign();
     this.buildCounter();
     this.buildSeats();
+    this.buildSeatCustomers();
     this.buildExitFlow();
     debugLog("CafeSceneLayout.build → creating MenuBoard");
     this.menuBoard = new MenuBoard(this.scene);
@@ -100,6 +110,7 @@ export class CafeSceneLayout {
     debugLog("DRINK_MENU from Drink.ts:", DRINK_MENU.length, "items");
     debugLog("Tracked layout planes:", this.planes.length);
     debugLog("Seat markers:", this.seatMarkers.length);
+    debugLog("Seat customers:", this.seatCustomers.length);
     debugLog("MenuBoard planeCount:", this.menuBoard?.planeCount ?? "null");
     logCameraAndCanvas(this.scene, this.camera, this.gameEngine.engine);
     logSceneMeshes(this.scene);
@@ -189,6 +200,14 @@ export class CafeSceneLayout {
     for (let i = 0; i < 3; i++) {
       const role = i === ACTIVE_SEAT_INDEX ? "active" : "queue";
       this.seatMarkers.push(new SeatMarker(this.scene, { index: i, role }));
+    }
+  }
+
+  /** Placeholder monsters + static order bubbles (Phase 1 item 3). */
+  private buildSeatCustomers(): void {
+    debugLog("CafeSceneLayout.build → seat customers", PHASE1_DEMO_CUSTOMERS.length);
+    for (const config of PHASE1_DEMO_CUSTOMERS) {
+      this.seatCustomers.push(new SeatCustomer(this.scene, config));
     }
   }
 

@@ -240,13 +240,13 @@ Run starts (3:00 shift timer, 0 strikes, 3 Boss calls remaining)
 ### Phase 0 — Foundation
 
 - [x] Bun + Babylon scaffold, OOP skeleton
-- [ ] Static mockup scene layout
+- [x] Static mockup scene layout
 
 ### Phase 1 — Read-only scene
 
 - [x] Layout: seats, exit flow, menu, bell, hide, poster
 - [x] Three drinks labeled; queue vs active seat markers
-- [ ] Placeholder monsters + static bubbles
+- [x] Placeholder monsters + static bubbles
 
 ### Phase 2 — Queue and serve
 
