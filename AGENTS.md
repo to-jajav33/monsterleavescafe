@@ -69,11 +69,11 @@ See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
 |------|--------|-------|
 | Core loop | Scoped | Active = seat by Exit; queue preview; hold-to-serve |
 | Player | Scoped | Barista, fixed first-person |
-| Monsters | Scoped | Rage → burst → lunge; mind-change before 50% rage |
-| Drinks | Scoped | Eyeball, Blood O-neg, Witch brew |
-| Boss | Scoped | 3 calls/run; apologize negates strike |
-| Hide | Scoped | Medusa event — hide before stone |
-| Win / lose | Scoped | Win = 3 min & \<3 strikes; Lose = 3 strikes or backroom dog |
+| Monsters | Scoped | Abstract `patienceSeconds`; queue + active rage |
+| Drinks | Scoped | `holdDurationSeconds`: blood \< brew \< eyeball |
+| Boss | Scoped | Pre-rage → active; post-100% → that monster (0.5s) |
+| Hide | Scoped | Medusa; fail → fired/stoned game over |
+| Win / lose | Scoped | Win 3 min; Lose strikes / backroom / Medusa |
 | Refill / backroom | Later | Forward/back stealth; instant lose if caught |
 | Audio | Planned | Post-core juice |
 | Save data | Out of v1 | |
