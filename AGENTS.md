@@ -67,10 +67,14 @@ See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Core loop | Scoped | Hold-to-serve correct drink; max 3 monsters |
-| Player | Scoped | Barista, fixed first-person, no movement v1 |
-| Monsters | Scoped | Orders in bubbles; rage bubble → burst → lunge |
-| Win / lose | TBD | Lives vs per-shift rules — see open questions |
+| Core loop | Scoped | Active = seat by Exit; queue preview; hold-to-serve |
+| Player | Scoped | Barista, fixed first-person |
+| Monsters | Scoped | Rage → burst → lunge; mind-change before 50% rage |
+| Drinks | Scoped | Eyeball, Blood O-neg, Witch brew |
+| Boss | Scoped | 3 calls/run; apologize negates strike |
+| Hide | Scoped | Medusa event — hide before stone |
+| Win / lose | Scoped | Win = 3 min & \<3 strikes; Lose = 3 strikes or backroom dog |
+| Refill / backroom | Later | Forward/back stealth; instant lose if caught |
 | Audio | Planned | Post-core juice |
 | Save data | Out of v1 | |
 
@@ -79,10 +83,12 @@ See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
 - [x] Project scaffold: Bun + Babylon 2D ortho scene
 - [x] OOP skeleton: `Game`, `GameEngine`, `GameScene`, `Entity`
 - [x] `src/utils/` helpers (math, canvas)
-- [ ] Static mockup scene (counter, 3 seats, menu) — [GAME_SCOPE.md](./GAME_SCOPE.md) Phase 1
-- [ ] Hold-to-serve menu interaction — Phase 2
-- [ ] Rage bubble + burst + angry lunge — Phase 3
-- [ ] Spawn queue + win/lose — Phase 4
+- [ ] Static mockup scene — Phase 1
+- [ ] Queue (active by Exit) + hold-to-serve — Phase 2
+- [ ] Rage, 50% mind-change, burst, lunge, strikes — Phase 3
+- [ ] 3:00 timer, Boss (3 calls), win/lose — Phase 4
+- [ ] Medusa + Hide — Phase 5
+- [ ] Refill backroom mini-game — Phase 6
 
 ## Commands
 
