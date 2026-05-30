@@ -3,24 +3,15 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 import { Vec2 } from "../utils/math.ts";
 
+import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
 import {
   LayoutGui,
   parseFontSizePx,
   parseFontWeight,
 } from "./LayoutGui.ts";
+import { LayoutLayer } from "./LayoutLayer.ts";
+import { MenuBoard } from "./MenuBoard.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
-
-/**
- * 2D draw order (renderingGroupId). Higher = on top.
- * Do not rely on tiny Z offsets — ortho + overlapping Y needs explicit groups.
- */
-export const LayoutLayer = {
-  backWall: 0,
-  decor: 1,
-  seats: 2,
-  counter: 3,
-  ui: 4,
-} as const;
 
 type PanelConfig = LayoutPlaneConfig & {
   label?: string;
@@ -28,12 +19,14 @@ type PanelConfig = LayoutPlaneConfig & {
 };
 
 /**
- * Phase 1 — item 1: mockup layout only (no monsters, drink slots, or bubbles).
+ * Phase 1 mockup scene — layout, menu drinks, seat markers.
  * Positions tuned for 1280×720 orthographic space (origin = screen center).
  */
 export class CafeSceneLayout {
   private readonly planes: LayoutPlane[] = [];
   private readonly gui: LayoutGui;
+  private readonly seatMarkers: SeatMarker[] = [];
+  private menuBoard: MenuBoard | null = null;
 
   constructor(private readonly scene: Scene) {
     this.gui = new LayoutGui(scene);
@@ -41,6 +34,12 @@ export class CafeSceneLayout {
   }
 
   dispose(): void {
+    this.menuBoard?.dispose();
+    this.menuBoard = null;
+    for (const seat of this.seatMarkers) {
+      seat.dispose();
+    }
+    this.seatMarkers.length = 0;
     this.gui.dispose();
     for (const plane of this.planes) {
       plane.dispose();
@@ -71,13 +70,12 @@ export class CafeSceneLayout {
     this.buildCounter();
     this.buildSeats();
     this.buildExitFlow();
-    this.buildMenuBoard();
+    this.menuBoard = new MenuBoard(this.scene, this.gui);
     this.buildHideButton();
     this.buildBossBell();
   }
 
   private buildBackWall(): void {
-    // Upper wall only — must not extend down over seats/counter (was y bottom ≈ -120)
     this.add({
       name: "layout_back_wall",
       center: new Vec2(0, 210),
@@ -156,29 +154,16 @@ export class CafeSceneLayout {
     });
   }
 
-  /** Three fixed seat anchors along the counter (right = toward Exit). */
+  /** Three seats — rightmost (R) = active; L/C = queue. */
   private buildSeats(): void {
-    const seatY = -90;
-    const positions = [
-      { x: -280, label: "Seat L" },
-      { x: 0, label: "Seat C" },
-      { x: 280, label: "Seat R" },
-    ];
-    for (const seat of positions) {
-      this.add({
-        name: `layout_seat_${seat.label.replace(/\s/g, "")}`,
-        center: new Vec2(seat.x, seatY),
-        width: 130,
-        height: 110,
-        layer: LayoutLayer.seats,
-        color: new Color3(0.45, 0.5, 0.58),
-        label: seat.label,
-        labelFont: "16px monospace",
-      });
+    for (let i = 0; i < 3; i++) {
+      const role = i === ACTIVE_SEAT_INDEX ? "active" : "queue";
+      this.seatMarkers.push(
+        new SeatMarker(this.scene, this.gui, { index: i, role }),
+      );
     }
   }
 
-  /** Visual queue direction toward off-screen exit (right). */
   private buildExitFlow(): void {
     this.add({
       name: "layout_exit_flow_arrow",
@@ -189,19 +174,6 @@ export class CafeSceneLayout {
       color: new Color3(0.4, 0.48, 0.55),
       label: "queue →",
       labelFont: "bold 22px monospace",
-    });
-  }
-
-  private buildMenuBoard(): void {
-    this.add({
-      name: "layout_menu_board",
-      center: new Vec2(-520, -300),
-      width: 200,
-      height: 150,
-      layer: LayoutLayer.ui,
-      color: new Color3(0.55, 0.48, 0.36),
-      label: "Menu",
-      labelFont: "bold 30px monospace",
     });
   }
 

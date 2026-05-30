@@ -14,6 +14,7 @@ export type LayoutLabelConfig = {
   height: number;
   fontSize?: number;
   fontWeight?: string;
+  color?: string;
 };
 
 /** Screen-space labels aligned to 1280×720 design coordinates. */
@@ -35,7 +36,7 @@ export class LayoutGui {
     const { left, top } = designCenterToTopLeft(config.center);
     const text = new TextBlock();
     text.text = config.text;
-    text.color = "#f8f8f2";
+    text.color = config.color ?? "#f8f8f2";
     text.fontSize = config.fontSize ?? 18;
     text.fontFamily = "monospace";
     text.fontWeight = config.fontWeight ?? "bold";
