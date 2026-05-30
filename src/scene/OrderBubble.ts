@@ -9,32 +9,75 @@ import { LayoutPlane } from "./LayoutPlane.ts";
 
 const BUBBLE_SIZE = 88;
 
+export const BUBBLE_COLORS = {
+  active: new Color3(1, 0.97, 0.82),
+  queue: new Color3(0.82, 0.84, 0.88),
+  match: new Color3(0.75, 0.95, 0.55),
+} as const;
+
+export type OrderBubbleStyle = keyof typeof BUBBLE_COLORS;
+
 /** Speech-style order bubble showing which drink the monster wants. */
 export class OrderBubble {
-  private readonly plane: LayoutPlane;
+  private plane: LayoutPlane;
+  private style: OrderBubbleStyle;
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
-    scene: Scene,
-    center: Vec2,
-    drink: Drink,
-    nameSuffix: string,
-    depthOffset: number,
+    private readonly scene: Scene,
+    private readonly center: Vec2,
+    private readonly drink: Drink,
+    private readonly nameSuffix: string,
+    private readonly depthOffset: number,
+    initialStyle: OrderBubbleStyle,
   ) {
-    this.plane = new LayoutPlane(scene, {
-      name: `order_bubble_${nameSuffix}`,
-      center,
+    this.style = initialStyle;
+    this.plane = this.createPlane(initialStyle);
+  }
+
+  setStyle(next: OrderBubbleStyle): void {
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+      this.flashTimer = null;
+    }
+    this.style = next;
+    this.plane.dispose();
+    this.plane = this.createPlane(next);
+  }
+
+  flashMatch(): void {
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+    }
+    this.plane.dispose();
+    this.plane = this.createPlane("match");
+    this.flashTimer = setTimeout(() => {
+      this.flashTimer = null;
+      this.plane.dispose();
+      this.plane = this.createPlane(this.style);
+    }, 220);
+  }
+
+  private createPlane(style: OrderBubbleStyle): LayoutPlane {
+    return new LayoutPlane(this.scene, {
+      name: `order_bubble_${this.nameSuffix}`,
+      center: this.center,
       width: BUBBLE_SIZE,
       height: BUBBLE_SIZE,
       layer: LayoutLayer.seats,
-      depthOffset,
-      color: new Color3(0.93, 0.93, 0.9),
-      label: `${drink.slot}\n${drink.shortLabel}`,
+      depthOffset: this.depthOffset,
+      color: BUBBLE_COLORS[style],
+      label: `${this.drink.slot}\n${this.drink.shortLabel}`,
       labelFont: "bold 13px monospace",
       labelTextColor: "#2c2c34",
     });
   }
 
   dispose(): void {
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+      this.flashTimer = null;
+    }
     this.plane.dispose();
   }
 }

@@ -23,6 +23,8 @@ export type LayoutPlaneConfig = {
   label?: string;
   labelFont?: string;
   labelTextColor?: string;
+  /** Default false — only enable on interactive meshes (menu slots, buttons). */
+  pickable?: boolean;
 };
 
 function colorToHex(color: Color3): string {
@@ -52,6 +54,7 @@ export class LayoutPlane {
     const z = layer * 0.1 + depthOffset;
     this.mesh.position = new Vector3(center.x, center.y, z);
     this.mesh.renderingGroupId = layer;
+    this.mesh.isPickable = config.pickable ?? false;
     this.applyMaterial();
 
     if (/menu|hide|boss/i.test(name)) {

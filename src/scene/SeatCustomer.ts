@@ -7,7 +7,7 @@ import { debugLog } from "../utils/debugLog.ts";
 import { Vec2 } from "../utils/math.ts";
 
 import { SEAT_X, type SeatRole } from "./CounterSeat.ts";
-import { OrderBubble } from "./OrderBubble.ts";
+import { OrderBubble, type OrderBubbleStyle } from "./OrderBubble.ts";
 import { LayoutLayer } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
@@ -21,10 +21,15 @@ export type SeatCustomerConfig = {
 };
 
 /**
- * Phase 1 — placeholder monster + static order bubble at a counter seat.
+ * Placeholder monster + order bubble at a counter seat.
  */
 export class SeatCustomer {
   readonly monster: PlaceholderMonster;
+  readonly seatIndex: number;
+  readonly drinkSlot: 1 | 2 | 3;
+  readonly isActive: boolean;
+  readonly isOccupied = true;
+
   private readonly planes: LayoutPlane[] = [];
   private orderBubble: OrderBubble | null = null;
 
@@ -32,14 +37,18 @@ export class SeatCustomer {
     scene: Scene,
     readonly config: SeatCustomerConfig,
   ) {
-    const x = SEAT_X[config.seatIndex]!;
-    const drink = getDrinkBySlot(config.drinkSlot);
+    this.seatIndex = config.seatIndex;
+    this.drinkSlot = config.drinkSlot;
+    this.isActive = config.role === "active";
+
+    const x = SEAT_X[this.seatIndex]!;
+    const drink = getDrinkBySlot(this.drinkSlot);
     this.monster = new PlaceholderMonster(
-      config.role === "active" ? 22 : 28,
+      this.isActive ? 22 : 28,
     );
 
     debugLog("SeatCustomer", {
-      seat: config.seatIndex,
+      seat: this.seatIndex,
       role: config.role,
       order: drink.shortLabel,
       patience: this.monster.patienceSeconds,
@@ -47,7 +56,7 @@ export class SeatCustomer {
 
     this.planes.push(
       new LayoutPlane(scene, {
-        name: `monster_body_${config.seatIndex}`,
+        name: `monster_body_${this.seatIndex}`,
         center: new Vec2(x, MONSTER_CENTER_Y),
         width: 72,
         height: 85,
@@ -64,9 +73,18 @@ export class SeatCustomer {
       scene,
       new Vec2(x, BUBBLE_CENTER_Y),
       drink,
-      String(config.seatIndex),
+      String(this.seatIndex),
       0.12,
+      this.isActive ? "active" : "queue",
     );
+  }
+
+  setOrderBubbleStyle(style: OrderBubbleStyle): void {
+    this.orderBubble?.setStyle(style);
+  }
+
+  flashServeMatch(): void {
+    this.orderBubble?.flashMatch();
   }
 
   dispose(): void {

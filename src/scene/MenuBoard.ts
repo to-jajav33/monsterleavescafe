@@ -1,3 +1,4 @@
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 
@@ -23,15 +24,11 @@ const SLOT_CENTERS = [
 /** Menu board + three drink slots (slots render above the board panel). */
 export class MenuBoard {
   private readonly planes: LayoutPlane[] = [];
+  private readonly slotPlanes = new Map<1 | 2 | 3, LayoutPlane>();
 
   constructor(scene: Scene) {
     debugLog("MenuBoard.build start", {
       drinkCount: DRINK_MENU.length,
-      drinks: DRINK_MENU.map((d) => ({
-        slot: d.slot,
-        label: d.shortLabel,
-        color: d.menuColor.asArray(),
-      })),
       menuCenter: { x: MENU_CENTER.x, y: MENU_CENTER.y },
     });
 
@@ -68,24 +65,29 @@ export class MenuBoard {
     debugLog("MenuBoard.build done", { planeCount: this.planes.length });
   }
 
+  getSlotMesh(slot: 1 | 2 | 3): Mesh | undefined {
+    return this.slotPlanes.get(slot)?.mesh;
+  }
+
   get planeCount(): number {
     return this.planes.length;
   }
 
   private addDrinkSlot(scene: Scene, drink: Drink): void {
-    this.planes.push(
-      new LayoutPlane(scene, {
-        name: `menu_slot_${drink.slot}`,
-        center: SLOT_CENTERS[drink.slot - 1]!,
-        width: SLOT_W,
-        height: SLOT_H,
-        layer: LayoutLayer.ui,
-        depthOffset: 0.02 + drink.slot * 0.01,
-        color: drink.menuColor,
-        label: `${drink.slot}  ${drink.shortLabel}`,
-        labelFont: "bold 17px monospace",
-      }),
-    );
+    const plane = new LayoutPlane(scene, {
+      name: `menu_slot_${drink.slot}`,
+      center: SLOT_CENTERS[drink.slot - 1]!,
+      width: SLOT_W,
+      height: SLOT_H,
+      layer: LayoutLayer.ui,
+      depthOffset: 0.02 + drink.slot * 0.01,
+      color: drink.menuColor,
+      label: `${drink.slot}  ${drink.shortLabel}`,
+      labelFont: "bold 17px monospace",
+      pickable: true,
+    });
+    this.slotPlanes.set(drink.slot, plane);
+    this.planes.push(plane);
   }
 
   dispose(): void {
@@ -93,5 +95,6 @@ export class MenuBoard {
       plane.dispose();
     }
     this.planes.length = 0;
+    this.slotPlanes.clear();
   }
 }

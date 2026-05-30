@@ -250,7 +250,7 @@ Run starts (3:00 shift timer, 0 strikes, 3 Boss calls remaining)
 
 ### Phase 2 — Queue and serve
 
-- [ ] Active vs queue targeting (rightmost = active)
+- [x] Active vs queue targeting (rightmost = active)
 - [ ] Hold-to-serve + hold duration (tune constant)
 - [ ] Exit-right departure + line advance
 

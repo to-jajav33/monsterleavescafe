@@ -15,6 +15,7 @@ import {
   SeatCustomer,
 } from "./SeatCustomer.ts";
 import { LayoutLayer } from "./LayoutLayer.ts";
+import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
 
@@ -29,6 +30,7 @@ export class CafeSceneLayout {
   private readonly seatMarkers: SeatMarker[] = [];
   private readonly seatCustomers: SeatCustomer[] = [];
   private menuBoard: MenuBoard | null = null;
+  private gameplay: GameplayController | null = null;
   private readonly updateOrtho: () => void;
 
   constructor(
@@ -50,6 +52,8 @@ export class CafeSceneLayout {
 
   dispose(): void {
     this.gameEngine.offResize(this.updateOrtho);
+    this.gameplay?.dispose();
+    this.gameplay = null;
     this.menuBoard?.dispose();
     this.menuBoard = null;
     for (const customer of this.seatCustomers) {
@@ -101,6 +105,11 @@ export class CafeSceneLayout {
     debugLog("CafeSceneLayout.build → creating MenuBoard");
     this.menuBoard = new MenuBoard(this.scene);
     debugLog("CafeSceneLayout.build → MenuBoard planeCount", this.menuBoard.planeCount);
+    this.gameplay = new GameplayController(
+      this.scene,
+      this.menuBoard,
+      this.seatCustomers,
+    );
     this.buildHideButton();
     this.buildBossBell();
   }
