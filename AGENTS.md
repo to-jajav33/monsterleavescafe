@@ -4,7 +4,7 @@ Living document for AI agents and contributors. Update this file when specs, arc
 
 ## Vision
 
-2D game built with **Babylon.js** and **TypeScript**, served in development via **Bun**. Theme: *Monster Leaves Cafe* (details TBD).
+2D game built with **Babylon.js** and **TypeScript**, served in development via **Bun**. **Boba shop for monsters** — first-person barista sim. Full design scope: [GAME_SCOPE.md](./GAME_SCOPE.md).
 
 ## Tech stack
 
@@ -61,26 +61,28 @@ src/
 - **Sprites / meshes**: prefer simple planes or GUI textures until asset pipeline is defined.
 - **Input**: pointer/keyboard mapped in dedicated systems (not implemented yet).
 
-## Game design specs (fill in as decided)
+## Game design specs
+
+See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Core loop | TBD | e.g. cafe management, exploration, … |
-| Player character | TBD | |
-| Monsters / leaves theme | TBD | |
-| Win / lose | TBD | |
-| Audio | TBD | |
-| Save data | TBD | |
+| Core loop | Scoped | Hold-to-serve correct drink; max 3 monsters |
+| Player | Scoped | Barista, fixed first-person, no movement v1 |
+| Monsters | Scoped | Orders in bubbles; rage bubble → burst → lunge |
+| Win / lose | TBD | Lives vs per-shift rules — see open questions |
+| Audio | Planned | Post-core juice |
+| Save data | Out of v1 | |
 
 ## Milestones
 
 - [x] Project scaffold: Bun + Babylon 2D ortho scene
 - [x] OOP skeleton: `Game`, `GameEngine`, `GameScene`, `Entity`
 - [x] `src/utils/` helpers (math, canvas)
-- [ ] First playable entity + movement
-- [ ] Input system
-- [ ] Art / sprite pipeline
-- [ ] Gameplay loop per design table above
+- [ ] Static mockup scene (counter, 3 seats, menu) — [GAME_SCOPE.md](./GAME_SCOPE.md) Phase 1
+- [ ] Hold-to-serve menu interaction — Phase 2
+- [ ] Rage bubble + burst + angry lunge — Phase 3
+- [ ] Spawn queue + win/lose — Phase 4
 
 ## Commands
 
