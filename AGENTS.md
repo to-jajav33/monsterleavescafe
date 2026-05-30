@@ -92,7 +92,8 @@ See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
 - [x] `src/utils/` helpers (math, canvas)
 - [x] Static mockup scene — Phase 1 complete
 - [x] Active vs queue targeting (Seat R) — Phase 2 item 1
-- [ ] Hold-to-serve — Phase 2 item 2
+- [x] Hold-to-serve — Phase 2 item 2
+- [ ] Exit-right + line advance — Phase 2 item 3
 - [ ] Rage, 50% mind-change, burst, lunge, strikes — Phase 3
 - [ ] 3:00 timer, Boss (3 calls), win/lose — Phase 4
 - [ ] Medusa + Hide — Phase 5

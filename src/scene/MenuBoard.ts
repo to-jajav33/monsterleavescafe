@@ -2,7 +2,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 
-import { DRINK_MENU, type Drink } from "../game/Drink.ts";
+import { DRINK_MENU, getDrinkBySlot, type Drink } from "../game/Drink.ts";
 import { debugLog } from "../utils/debugLog.ts";
 import { Vec2 } from "../utils/math.ts";
 
@@ -13,8 +13,10 @@ import { LayoutPlane } from "./LayoutPlane.ts";
 const MENU_CENTER = new Vec2(-480, -230);
 const BOARD_W = 200;
 const BOARD_H = 190;
-const SLOT_W = 168;
-const SLOT_H = 44;
+export const MENU_SLOT_WIDTH = 168;
+export const MENU_SLOT_HEIGHT = 44;
+const SLOT_W = MENU_SLOT_WIDTH;
+const SLOT_H = MENU_SLOT_HEIGHT;
 const SLOT_CENTERS = [
   new Vec2(MENU_CENTER.x, MENU_CENTER.y + 52),
   new Vec2(MENU_CENTER.x, MENU_CENTER.y + 4),
@@ -67,6 +69,10 @@ export class MenuBoard {
 
   getSlotMesh(slot: 1 | 2 | 3): Mesh | undefined {
     return this.slotPlanes.get(slot)?.mesh;
+  }
+
+  getDrinkForSlot(slot: 1 | 2 | 3): Drink {
+    return getDrinkBySlot(slot);
   }
 
   get planeCount(): number {
