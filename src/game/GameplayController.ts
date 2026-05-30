@@ -7,18 +7,32 @@ import { MenuController } from "../scene/MenuController.ts";
 import { debugLog } from "../utils/debugLog.ts";
 
 import { CounterQueue } from "./CounterQueue.ts";
+import { LineAdvanceController } from "./LineAdvanceController.ts";
 import { ServeResolver } from "./ServeResolver.ts";
 
 /** Phase 2+ gameplay systems (queue, serve targeting, menu input). */
 export class GameplayController {
   private readonly queue: CounterQueue;
   private readonly resolver: ServeResolver;
+  private readonly lineAdvance: LineAdvanceController;
   private readonly input: SceneInputSystem;
   private readonly menu: MenuController;
 
-  constructor(scene: Scene, menuBoard: MenuBoard, customers: SeatCustomer[]) {
+  constructor(
+    scene: Scene,
+    menuBoard: MenuBoard,
+    customers: SeatCustomer[],
+  ) {
     this.queue = new CounterQueue(customers);
     this.resolver = new ServeResolver(this.queue);
+    this.lineAdvance = new LineAdvanceController(
+      scene,
+      this.queue,
+      customers,
+      () => {
+        this.applyOrderBubbleStyles();
+      },
+    );
     this.applyOrderBubbleStyles();
     this.input = new SceneInputSystem(scene, menuBoard);
     this.menu = new MenuController(
@@ -26,6 +40,12 @@ export class GameplayController {
       menuBoard,
       this.resolver,
       this.input.map,
+      {
+        canServe: () => !this.lineAdvance.isBusy,
+        onServeComplete: (customer) => {
+          this.lineAdvance.advanceAfterServe(customer);
+        },
+      },
     );
     debugLog("GameplayController ready", {
       activeSeat: this.queue.getActiveSeatIndex(),

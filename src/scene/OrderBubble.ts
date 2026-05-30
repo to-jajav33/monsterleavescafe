@@ -22,17 +22,34 @@ export class OrderBubble {
   private plane: LayoutPlane;
   private style: OrderBubbleStyle;
   private flashTimer: ReturnType<typeof setTimeout> | null = null;
+  private center: Vec2;
 
   constructor(
     private readonly scene: Scene,
-    private readonly center: Vec2,
+    center: Vec2,
     private readonly drink: Drink,
     private readonly nameSuffix: string,
     private readonly depthOffset: number,
     initialStyle: OrderBubbleStyle,
   ) {
+    this.center = center.clone();
     this.style = initialStyle;
     this.plane = this.createPlane(initialStyle);
+  }
+
+  getMesh() {
+    return this.plane.mesh;
+  }
+
+  getCenter(): Vec2 {
+    return this.center.clone();
+  }
+
+  setCenter(x: number, y: number): void {
+    this.center.x = x;
+    this.center.y = y;
+    this.plane.mesh.position.x = x;
+    this.plane.mesh.position.y = y;
   }
 
   setStyle(next: OrderBubbleStyle): void {

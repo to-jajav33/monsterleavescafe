@@ -2,41 +2,50 @@ import { ACTIVE_SEAT_INDEX } from "../scene/CounterSeat.ts";
 import type { SeatCustomer } from "../scene/SeatCustomer.ts";
 
 /**
- * Counter line — active customer is the seat closest to Exit (rightmost for now).
+ * Counter line — three seat slots; active customer sits at Exit (seat R).
  */
 export class CounterQueue {
-  constructor(private readonly customers: readonly SeatCustomer[]) {}
+  private readonly slots: Array<SeatCustomer | null>;
 
-  /** Seat index (0=L, 1=C, 2=R) currently being served. */
-  getActiveSeatIndex(): number {
-    const occupied = this.customers.filter((c) => c.isOccupied);
-    if (occupied.length === 0) {
-      return ACTIVE_SEAT_INDEX;
+  constructor(customers: readonly SeatCustomer[]) {
+    this.slots = [null, null, null];
+    for (const customer of customers) {
+      this.slots[customer.seatIndex] = customer;
     }
-    return occupied.reduce(
-      (max, c) => (c.seatIndex > max ? c.seatIndex : max),
-      0,
-    );
+  }
+
+  getActiveSeatIndex(): number {
+    return ACTIVE_SEAT_INDEX;
   }
 
   getActiveCustomer(): SeatCustomer | undefined {
-    const index = this.getActiveSeatIndex();
-    return this.customers.find((c) => c.seatIndex === index);
+    const atExit = this.slots[ACTIVE_SEAT_INDEX];
+    return atExit?.isActive ? atExit : undefined;
   }
 
   getCustomerAt(seatIndex: number): SeatCustomer | undefined {
-    return this.customers.find((c) => c.seatIndex === seatIndex);
+    return this.slots[seatIndex] ?? undefined;
+  }
+
+  setCustomerAt(seatIndex: number, customer: SeatCustomer | null): void {
+    this.slots[seatIndex] = customer;
+  }
+
+  clearSeat(seatIndex: number): void {
+    this.slots[seatIndex] = null;
   }
 
   isActiveSeat(seatIndex: number): boolean {
-    return seatIndex === this.getActiveSeatIndex();
+    return seatIndex === ACTIVE_SEAT_INDEX;
   }
 
   get queueCustomers(): SeatCustomer[] {
-    return this.customers.filter((c) => !c.isActive);
+    return this.slots.filter(
+      (c): c is SeatCustomer => c !== null && !c.isActive,
+    );
   }
 
-  get allCustomers(): readonly SeatCustomer[] {
-    return this.customers;
+  get allCustomers(): SeatCustomer[] {
+    return this.slots.filter((c): c is SeatCustomer => c !== null);
   }
 }

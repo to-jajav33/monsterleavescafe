@@ -27,6 +27,11 @@ type ActiveHold = {
   source: InputSource;
 };
 
+export type MenuControllerOptions = {
+  canServe: () => boolean;
+  onServeComplete: (customer: SeatCustomer) => void;
+};
+
 /**
  * Hold-to-serve driven by {@link InputMap} actions (menu_slot_1..3).
  * Pointer and keyboard are wired via {@link SceneInputSystem} providers.
@@ -42,6 +47,7 @@ export class MenuController {
     menuBoard: MenuBoard,
     private readonly resolver: ServeResolver,
     inputMap: InputMap,
+    private readonly options: MenuControllerOptions,
   ) {
     for (const slot of [1, 2, 3] as const) {
       const mesh = menuBoard.getSlotMesh(slot);
@@ -80,6 +86,11 @@ export class MenuController {
   }
 
   private onSlotDown(slot: 1 | 2 | 3, source: InputSource): void {
+    if (!this.options.canServe()) {
+      debugLog("Menu hold blocked: line advancing");
+      return;
+    }
+
     this.cancelHold("switched slot");
 
     const result = this.resolver.evaluateMenuPress(slot);
@@ -141,6 +152,7 @@ export class MenuController {
       drink: active.drink.shortLabel,
       holdSeconds: active.drink.holdDurationSeconds,
     });
+    this.options.onServeComplete(active.customer);
   }
 
   private cancelHold(reason: string): void {

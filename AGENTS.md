@@ -97,7 +97,8 @@ See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
 - [x] Static mockup scene — Phase 1 complete
 - [x] Active vs queue targeting (Seat R) — Phase 2 item 1
 - [x] Hold-to-serve — Phase 2 item 2
-- [ ] Exit-right + line advance — Phase 2 item 3
+- [x] Exit-right + line advance — Phase 2 item 3
+- [ ] Phase 3 — rage / burst (see GAME_SCOPE.md)
 - [ ] Rage, 50% mind-change, burst, lunge, strikes — Phase 3
 - [ ] 3:00 timer, Boss (3 calls), win/lose — Phase 4
 - [ ] Medusa + Hide — Phase 5

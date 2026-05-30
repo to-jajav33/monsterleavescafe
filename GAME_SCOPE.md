@@ -252,7 +252,7 @@ Run starts (3:00 shift timer, 0 strikes, 3 Boss calls remaining)
 
 - [x] Active vs queue targeting (rightmost = active)
 - [x] Hold-to-serve + hold duration (tune constant)
-- [ ] Exit-right departure + line advance
+- [x] Exit-right departure + line advance
 
 ### Phase 3 — Rage, mind-change, anger
 
