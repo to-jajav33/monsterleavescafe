@@ -18,6 +18,7 @@ import { LayoutLayer } from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
+import { SCENE_BACKGROUND_URL } from "./sceneAssets.ts";
 
 type PanelConfig = LayoutPlaneConfig;
 
@@ -94,9 +95,7 @@ export class CafeSceneLayout {
   }
 
   private build(): void {
-    this.buildBackWall();
-    this.buildWindow();
-    this.buildPoster();
+    this.buildSceneBackground();
     this.buildExitSign();
     this.buildCounter();
     this.buildSeats();
@@ -126,50 +125,18 @@ export class CafeSceneLayout {
     debugLog("=== end summary ===");
   }
 
-  private buildBackWall(): void {
+  /** Full-design backdrop from `assets/image-bg.png`. */
+  private buildSceneBackground(): void {
+    debugLog("CafeSceneLayout.build → scene background", SCENE_BACKGROUND_URL);
     this.add({
-      name: "layout_back_wall",
-      center: new Vec2(0, 210),
-      width: 1280,
-      height: 360,
+      name: "layout_scene_background",
+      center: new Vec2(0, 0),
+      width: DESIGN_WIDTH,
+      height: DESIGN_HEIGHT,
       layer: LayoutLayer.backWall,
-      color: new Color3(0.38, 0.34, 0.42),
-    });
-  }
-
-  private buildWindow(): void {
-    this.add({
-      name: "layout_window_frame",
-      center: new Vec2(0, 200),
-      width: 440,
-      height: 220,
-      layer: LayoutLayer.decor,
-      color: new Color3(0.5, 0.55, 0.62),
-      label: "Window",
-      labelFont: "bold 28px monospace",
-    });
-    this.add({
-      name: "layout_window_glass",
-      center: new Vec2(0, 165),
-      width: 360,
-      height: 120,
-      layer: LayoutLayer.decor,
-      color: new Color3(0.32, 0.4, 0.52),
-      label: "queue preview",
-      labelFont: "16px monospace",
-    });
-  }
-
-  private buildPoster(): void {
-    this.add({
-      name: "layout_boba_poster",
-      center: new Vec2(440, 140),
-      width: 170,
-      height: 200,
-      layer: LayoutLayer.decor,
-      color: new Color3(0.72, 0.52, 0.38),
-      label: "Boba",
-      labelFont: "bold 32px monospace",
+      depthOffset: -0.02,
+      color: new Color3(0.2, 0.18, 0.22),
+      imageUrl: SCENE_BACKGROUND_URL,
     });
   }
 

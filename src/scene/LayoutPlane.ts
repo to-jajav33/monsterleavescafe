@@ -5,6 +5,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 
 import { debugLog } from "../utils/debugLog.ts";
 import { Vec2 } from "../utils/math.ts";
@@ -19,6 +20,8 @@ export type LayoutPlaneConfig = {
   /** Nudge along Z within a layer to avoid coplanar z-fighting (default 0). */
   depthOffset?: number;
   color: Color3;
+  /** PNG/JPG in world space (e.g. `/assets/image-bg.png`). */
+  imageUrl?: string;
   /** Drawn on the mesh texture — moves/scales with this plane (not screen GUI). */
   label?: string;
   labelFont?: string;
@@ -39,6 +42,7 @@ function colorToHex(color: Color3): string {
  */
 export class LayoutPlane {
   readonly mesh: Mesh;
+  private imageTexture: Texture | null = null;
 
   constructor(
     private readonly scene: Scene,
@@ -74,6 +78,8 @@ export class LayoutPlane {
   }
 
   dispose(): void {
+    this.imageTexture?.dispose();
+    this.imageTexture = null;
     this.mesh.material?.dispose();
     this.mesh.dispose();
   }
@@ -84,7 +90,20 @@ export class LayoutPlane {
     mat.backFaceCulling = true;
     mat.disableDepthWrite = true;
 
-    if (this.config.label) {
+    if (this.config.imageUrl) {
+      const tex = new Texture(this.config.imageUrl, this.scene, {
+        invertY: true,
+      });
+      tex.hasAlpha = true;
+      tex.wrapU = Texture.CLAMP_ADDRESSMODE;
+      tex.wrapV = Texture.CLAMP_ADDRESSMODE;
+      this.imageTexture = tex;
+      mat.diffuseTexture = tex;
+      mat.emissiveTexture = tex;
+      mat.diffuseColor = Color3.White();
+      mat.emissiveColor = Color3.White();
+      mat.useAlphaFromDiffuseTexture = true;
+    } else if (this.config.label) {
       const tex = this.createLabelTexture();
       mat.diffuseTexture = tex;
       mat.emissiveTexture = tex;
