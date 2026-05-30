@@ -2,7 +2,10 @@
 
 Planning document for the current mockup and core mechanics. **No implementation detail here** — defines what we are building and in what order.
 
-**Reference mockup:** `assets/image-a31e2bdf-f387-4f7e-90aa-d0e67fb695f7.png` (first-person counter view, boba shop interior).
+**Reference mockups** (latest first):
+
+- `assets/image-85f7502a-f98a-4277-84ff-d4fbe51f11dd.png` — current layout sketch
+- `assets/image-85f7502a-f98a-4277-84ff-d4fbe51f11dd.png` — earlier pass (same composition)
 
 ---
 
@@ -22,21 +25,51 @@ You are a **barista** at a **boba shop for monsters**. From a **first-person** v
 
 ## Perspective and scene (from mockup)
 
-| Element | Role in game |
-|---------|----------------|
-| Counter (foreground) | Player’s workspace; menu and interactables live here |
-| Menu (bottom-left) | **3 drink slots** — the only items the player can serve in v1 |
-| Hide (bottom-center) | UI control — **purpose TBD** (see open questions) |
-| Service bell “BOSS” (bottom-right) | Ambient / future mechanic — **not in v1 core loop** unless specified later |
-| Three monster seats (center) | Max **3 active customers** at once |
-| Speech bubbles (above monsters) | Show **which of the 3 drinks** that monster wants |
-| Mirror / back wall | Set dressing; reflects shop depth |
-| Boba poster (right wall) | Branding / atmosphere |
-| Exit arrow (right) | **Out of scope for v1** unless we add day/shift structure later |
+| Element                               | Role in game                                                                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Counter (foreground)                  | Player’s workspace; menu and interactables live here                                                                                                    |
+| Menu (bottom-left)                    | **3 drink slots** — the only items the player can serve in v1                                                                                           |
+| Hide (bottom-center)                  | UI control — **purpose TBD** (see open questions)                                                                                                       |
+| Service bell “BOSS” (bottom-right)    | Ambient / future mechanic — **not in v1 core loop** unless specified later                                                                              |
+| Three monster seats (center)          | Max **3 active customers** at once                                                                                                                      |
+| Speech bubbles (above monsters)       | Show **which of the 3 drinks** that monster wants                                                                                                       |
+| Window / mirror (center back)         | Large frame behind seats; sketch shows **extra monster silhouettes** — treat as **waiting line preview** (cosmetic in v1, can tie to spawn queue later) |
+| Boba poster (right wall)              | Branding / atmosphere; static in v1                                                                                                                     |
+| Exit sign (right wall, above counter) | Arrow + “Exit” label — **deferred** (end of shift / meta)                                                                                               |
 
-**Camera:** fixed first-person, no walking. Parallax or subtle counter depth optional later.
+**Camera:** fixed first-person, no walking. Player hands are **not** drawn in the mockup (implied barista POV only).
 
-**Presentation:** 2D layers (Babylon orthographic or layered planes/sprites) composed to feel like a illustrated diorama, not a free-roaming 3D space.
+**Presentation:** 2D layers (Babylon orthographic or layered planes/sprites) composed to feel like an illustrated diorama, not a free-roaming 3D space. Target readability: **indie storyboard / sketch** until final art replaces placeholders.
+
+### Layer order (back → front)
+
+Use consistent Z-order when compositing:
+
+1. Back wall, window/mirror, poster, exit sign
+2. Far queue silhouettes (inside window frame)
+3. Monster bodies (three fixed seat anchors)
+4. Order speech bubbles
+5. Rage bubbles (same anchor as order, on top)
+6. Counter surface
+7. Menu board, Hide, BOSS bell (interactive UI)
+8. Juice / particles / lunge overlay (temporary, top)
+
+### Seat and bubble layout (from mockup)
+
+- **Three fixed seats** across the counter (left, center, right) — not free placement.
+- **Order bubbles:** large circles **centered above each monster’s head**; sketch is empty; game fills with drink **1 / 2 / 3** (icon or numeral — art TBD).
+- **Menu board:** labeled “Menu”; **three vertical slots** on the left of the counter — only valid serve inputs.
+- **Bottom UI band:** menu (left), Hide (center), bell (right) — reserve **safe hit areas** so holds/clicks do not overlap.
+
+### Parallel state (important for v1)
+
+Each of the **three seats** runs **independently**:
+
+- Own order (drink id)
+- Own patience / rage bubble growth
+- Own success or anger outcome
+
+Serving one monster does not pause timers on the others.
 
 ---
 
@@ -61,17 +94,17 @@ Spawn wave (≤3 monsters)
 
 Planned OOP-shaped systems (names indicative, not file commitments):
 
-| System | Responsibility |
-|--------|----------------|
-| **Shift / wave** | When monsters appear, how many, pacing |
-| **Monster** | Seat index, state (waiting, served, angry), visuals |
-| **Order bubble** | Displays drink id (1–3), burst on failure |
-| **Rage bubble** | Overlay on order bubble; scale + opacity over time; gibberish text |
-| **Menu** | Three items; pointer down/up; hold progress |
-| **Serve resolver** | Match held drink to monster; complete serve after hold time |
-| **Patience** | Per-monster timer driving rage bubble growth |
-| **Anger sequence** | Burst → angry state → lunge toward camera |
-| **UI chrome** | Hide, bell, poster — mostly static in v1 |
+| System             | Responsibility                                                     |
+| ------------------ | ------------------------------------------------------------------ |
+| **Shift / wave**   | When monsters appear, how many, pacing                             |
+| **Monster**        | Seat index, state (waiting, served, angry), visuals                |
+| **Order bubble**   | Displays drink id (1–3), burst on failure                          |
+| **Rage bubble**    | Overlay on order bubble; scale + opacity over time; gibberish text |
+| **Menu**           | Three items; pointer down/up; hold progress                        |
+| **Serve resolver** | Match held drink to monster; complete serve after hold time        |
+| **Patience**       | Per-monster timer driving rage bubble growth                       |
+| **Anger sequence** | Burst → angry state → lunge toward camera                          |
+| **UI chrome**      | Hide, bell, poster — mostly static in v1                           |
 
 ---
 
@@ -150,14 +183,14 @@ Planned OOP-shaped systems (names indicative, not file commitments):
 
 ## UI elements (mockup)
 
-| Control | v1 status |
-|---------|-----------|
-| Menu (3 items) | **Required** — core interaction |
-| Monster order bubbles | **Required** |
-| Rage bubbles | **Required** |
-| Hide | **Deferred** — define behavior (peek under counter? pause? tutorial?) |
-| BOSS bell | **Deferred** — possible boss wave or call next customer |
-| Exit | **Deferred** — end of shift / meta progression |
+| Control               | v1 status                                                             |
+| --------------------- | --------------------------------------------------------------------- |
+| Menu (3 items)        | **Required** — core interaction                                       |
+| Monster order bubbles | **Required**                                                          |
+| Rage bubbles          | **Required**                                                          |
+| Hide                  | **Deferred** — define behavior (peek under counter? pause? tutorial?) |
+| BOSS bell             | **Deferred** — possible boss wave or call next customer               |
+| Exit                  | **Deferred** — end of shift / meta progression                        |
 
 ---
 
@@ -165,11 +198,11 @@ Planned OOP-shaped systems (names indicative, not file commitments):
 
 Decide before balancing; placeholders:
 
-| Outcome | Candidate rules |
-|---------|-----------------|
-| **Lose** | N angry monsters per shift; single angry = instant fail; time limit |
-| **Win** | Serve M monsters without failure; survive until closing time |
-| **Progression** | Faster patience, more order variety, monster types — post-v1 |
+| Outcome         | Candidate rules                                                     |
+| --------------- | ------------------------------------------------------------------- |
+| **Lose**        | N angry monsters per shift; single angry = instant fail; time limit |
+| **Win**         | Serve M monsters without failure; survive until closing time        |
+| **Progression** | Faster patience, more order variety, monster types — post-v1        |
 
 ---
 
@@ -234,16 +267,44 @@ Aligns with [AGENTS.md](./AGENTS.md):
 
 ---
 
+## Scoped now, detail later (good to add when you return)
+
+Short list of **worth documenting next** — not blocking Phase 1, but avoids rework:
+
+| Topic                       | Why add it soon                                             |
+| --------------------------- | ----------------------------------------------------------- |
+| **Drink identity**          | Names, colors, icons for slots 1–3 (players learn by sight) |
+| **Serve targeting**         | Required before Phase 2 (duplicate orders at two seats)     |
+| **Hold + patience seconds** | Tuning constants; drives feel of tension                    |
+| **Success feedback**        | Monster leave animation? SFX? points?                       |
+| **Window queue**            | Pure backdrop vs silhouettes update as line advances        |
+| **Hide**                    | Duck / cover / skip tutorial / pause?                       |
+| **BOSS bell**               | Spawn boss, speed up line, or shop “manager” interrupt      |
+| **Shift structure**         | Single endless wave vs N customers per day                  |
+| **Rage gibberish rules**    | Charset, refresh rate, max symbols, font style              |
+
+---
+
 ## Open questions (resolve before coding each phase)
 
 1. **Serve targeting:** which monster receives the drink when multiple share the same order? (see Serve interaction)
 2. **Hold duration:** seconds for a full serve?
 3. **Patience duration:** seconds until rage bubble meets order?
-4. **Hide button:** what does it do?
-5. **BOSS bell:** boss wave, spawn pacing, or cosmetic only?
-6. **Failure rule:** one strike vs lives vs shift timer?
-7. **Art pipeline:** single illustrated background vs separate layers per monster?
-8. **Monster identity:** one silhouette vs multiple types affecting patience?
+4. **Hold feedback:** radial fill on slot, pour animation, progress bar elsewhere?
+5. **Hide button:** what does it do?
+6. **BOSS bell:** boss wave, spawn pacing, or cosmetic only?
+7. **Failure rule:** one strike vs lives vs shift timer?
+8. **Art pipeline:** single full background image vs layered sprites per monster/bubble?
+9. **Monster identity:** one silhouette vs types with different patience?
+10. **Window silhouettes:** static art vs reflect remaining queue count?
+
+---
+
+## Reserved for your next pass
+
+_Add subsections here when you have more mockups or notes (e.g. boss monster, drink recipes, day/night, upgrades). No implementation until moved into phases above._
+
+- _(empty — waiting on more design input)_
 
 ---
 
