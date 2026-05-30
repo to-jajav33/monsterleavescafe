@@ -42,3 +42,9 @@ export function getDrinkBySlot(slot: 1 | 2 | 3): Drink {
   }
   return drink;
 }
+
+/** Random drink slot different from `current` (mind-change). */
+export function pickRandomDrinkSlotExcept(current: 1 | 2 | 3): 1 | 2 | 3 {
+  const others = DRINK_MENU.map((d) => d.slot).filter((s) => s !== current);
+  return others[Math.floor(Math.random() * others.length)]!;
+}

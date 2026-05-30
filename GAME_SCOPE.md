@@ -256,7 +256,7 @@ Run starts (3:00 shift timer, 0 strikes, 3 Boss calls remaining)
 
 ### Phase 3 — Rage, mind-change, anger
 
-- [ ] Rage growth; 50% mind-change lock
+- [x] Rage growth; 50% mind-change lock
 - [ ] Burst + lunge + strike increment
 
 ### Phase 4 — Shift win/lose + Boss

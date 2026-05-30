@@ -8,6 +8,7 @@ import { debugLog } from "../utils/debugLog.ts";
 
 import { CounterQueue } from "./CounterQueue.ts";
 import { LineAdvanceController } from "./LineAdvanceController.ts";
+import { RageSystem } from "./RageSystem.ts";
 import { ServeResolver } from "./ServeResolver.ts";
 
 /** Phase 2+ gameplay systems (queue, serve targeting, menu input). */
@@ -15,6 +16,7 @@ export class GameplayController {
   private readonly queue: CounterQueue;
   private readonly resolver: ServeResolver;
   private readonly lineAdvance: LineAdvanceController;
+  private readonly rage: RageSystem;
   private readonly input: SceneInputSystem;
   private readonly menu: MenuController;
 
@@ -34,6 +36,7 @@ export class GameplayController {
       },
     );
     this.applyOrderBubbleStyles();
+    this.rage = new RageSystem(scene, this.queue, () => this.lineAdvance.isBusy);
     this.input = new SceneInputSystem(scene, menuBoard);
     this.menu = new MenuController(
       scene,
@@ -65,6 +68,7 @@ export class GameplayController {
 
   dispose(): void {
     this.menu.dispose();
+    this.rage.dispose();
     this.input.dispose();
   }
 }
