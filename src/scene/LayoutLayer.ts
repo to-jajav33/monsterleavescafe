@@ -33,6 +33,7 @@ export const LayoutZOffset = {
 /** Transparent-pass sort: higher draws on top within the same rendering group. */
 export const LayoutAlphaIndex = {
   background: 0,
+  ghostNpc: 5,
   counterTop: 10,
   seatContent: 20,
   menuBoard: 100,

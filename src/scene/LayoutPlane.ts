@@ -31,6 +31,8 @@ export type LayoutPlaneConfig = {
   imageBlend?: ImageBlendMode;
   /** Cutoff for alphatest mode (default 0.35). */
   imageAlphaCutoff?: number;
+  /** Overall material alpha for image planes (default 1). */
+  imageOpacity?: number;
   /** Drawn on the mesh texture — moves/scales with this plane (not screen GUI). */
   label?: string;
   labelFont?: string;
@@ -87,7 +89,7 @@ export class LayoutPlane {
     this.mesh.isPickable = config.pickable ?? false;
     this.applyMaterial();
 
-    if (/layout_scene|layout_counter|menu|hide|boss/i.test(name)) {
+    if (/layout_scene|layout_counter|layout_ghost|menu|hide|boss/i.test(name)) {
       debugLog("LayoutPlane created:", {
         name,
         center: { x: center.x, y: center.y },
@@ -124,30 +126,26 @@ export class LayoutPlane {
       const blend = this.config.imageBlend ?? "alphablend";
       const url = this.config.imageUrl;
 
-      const tex = new Texture(
-        url,
-        this.scene,
-        {
-          invertY: true,
-          onLoad: () => {
-            const size = tex.getSize();
-            debugLog("LayoutPlane texture loaded:", {
-              mesh: this.config.name,
-              url,
-              width: size.width,
-              height: size.height,
-              blend,
-            });
-          },
-          onError: (_message, exception) => {
-            debugWarn("LayoutPlane texture FAILED:", {
-              mesh: this.config.name,
-              url,
-              exception,
-            });
-          },
+      const tex = new Texture(url, this.scene, {
+        invertY: true,
+        onLoad: () => {
+          const size = tex.getSize();
+          debugLog("LayoutPlane texture loaded:", {
+            mesh: this.config.name,
+            url,
+            width: size.width,
+            height: size.height,
+            blend,
+          });
         },
-      );
+        onError: (_message, exception) => {
+          debugWarn("LayoutPlane texture FAILED:", {
+            mesh: this.config.name,
+            url,
+            exception,
+          });
+        },
+      });
       tex.hasAlpha = true;
       tex.wrapU = Texture.CLAMP_ADDRESSMODE;
       tex.wrapV = Texture.CLAMP_ADDRESSMODE;
@@ -164,6 +162,7 @@ export class LayoutPlane {
       } else {
         mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
       }
+      mat.alpha = this.config.imageOpacity ?? 1;
     } else if (this.config.label) {
       const tex = this.createLabelTexture();
       mat.diffuseTexture = tex;
@@ -191,7 +190,7 @@ export class LayoutPlane {
       this.config.labelFont ?? `bold ${Math.floor(h * 0.32)}px monospace`;
     const textColor = this.config.labelTextColor ?? "#f8f8f2";
     tex.drawText(
-      this.config.label,
+      this.config.label ?? "",
       null,
       null,
       font,

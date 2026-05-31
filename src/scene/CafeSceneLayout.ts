@@ -22,6 +22,7 @@ import {
 } from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
+import { GhostNpcDecor } from "./GhostNpcDecor.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
 import {
   COUNTER_TOP_BRICK_ROW_FROM_BACK_WALL,
@@ -44,6 +45,7 @@ export class CafeSceneLayout {
   private readonly seatMarkers: SeatMarker[] = [];
   private readonly seatCustomers: SeatCustomer[] = [];
   private menuBoard: MenuBoard | null = null;
+  private ghostNpc: GhostNpcDecor | null = null;
   private gameplay: GameplayController | null = null;
   private readonly updateOrtho: () => void;
 
@@ -68,6 +70,8 @@ export class CafeSceneLayout {
     this.gameEngine.offResize(this.updateOrtho);
     this.gameplay?.dispose();
     this.gameplay = null;
+    this.ghostNpc?.dispose();
+    this.ghostNpc = null;
     this.menuBoard?.dispose();
     this.menuBoard = null;
     for (const customer of this.seatCustomers) {
@@ -106,6 +110,7 @@ export class CafeSceneLayout {
 
   private build(): void {
     this.buildSceneBackground();
+    this.buildGhostNpc();
     this.buildExitSign();
     this.buildSeats();
     this.buildSeatCustomers();
@@ -159,6 +164,10 @@ export class CafeSceneLayout {
       imageUrl: SCENE_BACKGROUND_URL,
       imageBlend: "alphablend",
     });
+  }
+
+  private buildGhostNpc(): void {
+    this.ghostNpc = new GhostNpcDecor(this.scene);
   }
 
   private buildExitSign(): void {

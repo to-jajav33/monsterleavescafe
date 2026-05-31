@@ -7,6 +7,8 @@ const server = Bun.serve({
       new Response(Bun.file("./assets/image-bg.png")),
     "/assets/image-counter-top.png": () =>
       new Response(Bun.file("./assets/image-counter-top.png")),
+    "/assets/image-ghost-npc.png": () =>
+      new Response(Bun.file("./assets/image-ghost-npc.png")),
   },
   development: {
     hmr: true,

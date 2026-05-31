@@ -4,6 +4,26 @@ import { Vec2 } from "../utils/math.ts";
 /** Scene art served from `index.ts` routes. */
 export const SCENE_BACKGROUND_URL = "/assets/image-bg.png";
 export const SCENE_COUNTER_TOP_URL = "/assets/image-counter-top.png";
+export const GHOST_NPC_URL = "/assets/image-ghost-npc.png";
+
+/** Native pixels of `image-ghost-npc.png`. */
+export const GHOST_NPC_NATIVE = {
+  width: 234,
+  height: 604,
+} as const;
+
+/** Window / mid-wall placement (behind table, in front of bg). */
+export const GHOST_NPC_CENTER = new Vec2(-40, 45);
+
+export const GHOST_NPC_DISPLAY_HEIGHT = 360;
+export const GHOST_NPC_DISPLAY_WIDTH =
+  GHOST_NPC_DISPLAY_HEIGHT * (GHOST_NPC_NATIVE.width / GHOST_NPC_NATIVE.height);
+
+/** Overall sprite transparency (0–1). */
+export const GHOST_NPC_OPACITY = 0.58;
+
+export const GHOST_NPC_HOVER_AMPLITUDE = 10;
+export const GHOST_NPC_HOVER_DURATION_SEC = 2.4;
 
 /** Native pixels of `image-counter-top.png` (aspect ratio). */
 export const COUNTER_TOP_NATIVE = {

@@ -63,6 +63,7 @@ export function logSceneMeshes(
     "monster",
     "order_bubble",
     "rage_bubble",
+    "ghost",
   ];
   const matches = scene.meshes.filter((m) =>
     needles.some((n) => m.name.toLowerCase().includes(n.toLowerCase())),
