@@ -57,8 +57,29 @@ const PLACEHOLDER_MONSTER_CENTER_Y = 5;
 const PLACEHOLDER_BUBBLE_ANCHOR_Y = 100;
 const PLACEHOLDER_WIDTH = 72;
 const PLACEHOLDER_HEIGHT = 85;
-const EXIT_X = 720;
+export const EXIT_X = 720;
+/** Off-screen left — entry slide mirrors {@link EXIT_X}. */
+export const OFFSCREEN_ENTRY_X = -720;
+
 const ORDER_DEPTH = LayoutZOffset.orderBubble;
+
+export const ART_MONSTER_APPEARANCES = [
+  "slime_idle",
+  "medusa_idle",
+  "bigfoot_idle",
+] as const satisfies readonly CustomerAppearance[];
+
+export function randomArtMonsterAppearance(): CustomerAppearance {
+  const pick =
+    ART_MONSTER_APPEARANCES[
+      Math.floor(Math.random() * ART_MONSTER_APPEARANCES.length)
+    ]!;
+  return pick;
+}
+
+export function randomDrinkSlot(): 1 | 2 | 3 {
+  return (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
+}
 
 export type CustomerAppearance =
   | "placeholder"
@@ -71,6 +92,8 @@ export type SeatCustomerConfig = {
   drinkSlot: 1 | 2 | 3;
   role: SeatRole;
   appearance?: CustomerAppearance;
+  /** Spawn at {@link OFFSCREEN_ENTRY_X}, then animate into seat. */
+  entryFromLeft?: boolean;
 };
 
 type ArtMonsterConfig = {
@@ -172,8 +195,9 @@ export class SeatCustomer {
       this.monster = new PlaceholderMonster(this.isActive ? 22 : 28);
     }
 
+    const spawnX = config.entryFromLeft ? OFFSCREEN_ENTRY_X : seatX;
     const { monster: monsterCenter, bubble: orderBubbleCenter } =
-      this.centersForSeat(this._seatIndex);
+      this.centersForSeat(this._seatIndex, spawnX);
 
     this.rage = new CustomerRage(this.monster.patienceSeconds);
 
@@ -264,6 +288,9 @@ export class SeatCustomer {
       orderBubbleCenter,
       `${this._seatIndex}_${drink.slot}`,
     );
+
+    this.applyWorldPositions(monsterCenter, orderBubbleCenter);
+    this.syncSeatDrawOrder();
   }
 
   get seatIndex(): number {
@@ -340,12 +367,12 @@ export class SeatCustomer {
     this.orderBubble?.flashMatch();
   }
 
-  /** X follows seat index; art monster Y is frame-bottom only (see monsterLayout.ts). */
-  private centersForSeat(seatIndex: number): {
+  /** X follows seat index (or override); art monster Y is frame-bottom only. */
+  private centersForSeat(seatIndex: number, centerX?: number): {
     monster: Vec2;
     bubble: Vec2;
   } {
-    const seatX = SEAT_X[seatIndex]!;
+    const seatX = centerX ?? SEAT_X[seatIndex]!;
     if (isArtMonster(this.appearance)) {
       const art = ART_MONSTERS[this.appearance];
       return {
@@ -361,6 +388,15 @@ export class SeatCustomer {
         PLACEHOLDER_WIDTH,
       ),
     };
+  }
+
+  private applyWorldPositions(monster: Vec2, bubble: Vec2): void {
+    for (const plane of this.planes) {
+      plane.mesh.position.x = monster.x;
+      plane.mesh.position.y = monster.y;
+    }
+    this.orderBubble?.setCenter(bubble.x, bubble.y);
+    this.rageBubble?.setCenter(bubble.x, bubble.y);
   }
 
   getMoveTargets(): MeshMoveTarget[] {

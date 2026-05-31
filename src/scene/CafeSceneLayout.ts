@@ -19,7 +19,7 @@ import { createContainViewport } from "../utils/containViewport.ts";
 import { DRINK_MENU } from "../game/Drink.ts";
 
 import type { SeatMarker } from "./CounterSeat.ts";
-import { PHASE1_DEMO_CUSTOMERS, SeatCustomer } from "./SeatCustomer.ts";
+import { SeatCustomer } from "./SeatCustomer.ts";
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
@@ -253,15 +253,9 @@ export class CafeSceneLayout {
     // Full-size monster sprites cover seat pads — no SeatMarker planes.
   }
 
-  /** Placeholder monsters + static order bubbles (Phase 1 item 3). */
+  /** Customers spawn via intro + line advance (empty at scene load). */
   private buildSeatCustomers(): void {
-    debugLog(
-      "CafeSceneLayout.build → seat customers",
-      PHASE1_DEMO_CUSTOMERS.length,
-    );
-    for (const config of PHASE1_DEMO_CUSTOMERS) {
-      this.seatCustomers.push(new SeatCustomer(this.scene, config));
-    }
+    debugLog("CafeSceneLayout.build → seat customers (none until intro)");
   }
 
   private buildFlashlightDecal(): void {

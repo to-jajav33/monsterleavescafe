@@ -7,6 +7,7 @@ import { MenuController } from "../scene/MenuController.ts";
 import { debugLog } from "../utils/debugLog.ts";
 
 import { CounterQueue } from "./CounterQueue.ts";
+import { CustomerIntroController } from "./CustomerIntroController.ts";
 import { LineAdvanceController } from "./LineAdvanceController.ts";
 import { RageSystem } from "./RageSystem.ts";
 import { ServeResolver } from "./ServeResolver.ts";
@@ -16,6 +17,7 @@ export class GameplayController {
   private readonly queue: CounterQueue;
   private readonly resolver: ServeResolver;
   private readonly lineAdvance: LineAdvanceController;
+  private readonly intro: CustomerIntroController;
   private readonly rage: RageSystem;
   private readonly input: SceneInputSystem;
   private readonly menu: MenuController;
@@ -35,8 +37,16 @@ export class GameplayController {
         this.applyOrderBubbleStyles();
       },
     );
+    this.intro = new CustomerIntroController(
+      scene,
+      this.queue,
+      customers,
+      () => {
+        this.applyOrderBubbleStyles();
+      },
+    );
     this.applyOrderBubbleStyles();
-    this.rage = new RageSystem(scene, this.queue, () => this.lineAdvance.isBusy);
+    this.rage = new RageSystem(scene, this.queue, () => this.isQueueBusy);
     this.input = new SceneInputSystem(scene, menuBoard);
     this.menu = new MenuController(
       scene,
@@ -44,12 +54,17 @@ export class GameplayController {
       this.resolver,
       this.input.map,
       {
-        canServe: () => !this.lineAdvance.isBusy,
+        canServe: () => !this.isQueueBusy,
         onServeComplete: (customer) => {
           this.lineAdvance.advanceAfterServe(customer);
         },
       },
     );
+
+    if (customers.length === 0) {
+      this.intro.scheduleFirstArrival();
+    }
+
     debugLog("GameplayController ready", {
       activeSeat: this.queue.getActiveSeatIndex(),
       activeOrder: this.queue.getActiveCustomer()?.drinkSlot,
@@ -57,7 +72,12 @@ export class GameplayController {
         seat: c.seatIndex,
         drink: c.drinkSlot,
       })),
+      awaitingFirstArrival: customers.length === 0,
     });
+  }
+
+  private get isQueueBusy(): boolean {
+    return this.lineAdvance.isBusy || this.intro.isBusy;
   }
 
   private applyOrderBubbleStyles(): void {
@@ -67,6 +87,7 @@ export class GameplayController {
   }
 
   dispose(): void {
+    this.intro.dispose();
     this.menu.dispose();
     this.rage.dispose();
     this.input.dispose();
