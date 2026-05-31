@@ -31,7 +31,12 @@ import {
   medusaOrderBubbleCenter,
   medusaSpriteCenterAtSeat,
 } from "./monsterMedusaAssets.ts";
-import { MONSTER_FRAME_BOTTOM_Y } from "./monsterLayout.ts";
+import {
+  applyMonsterSeatDrawOrder,
+  MONSTER_FRAME_BOTTOM_Y,
+  monsterBodyAlphaIndexForSeat,
+  monsterBodyZOffsetForSeat,
+} from "./monsterLayout.ts";
 import {
   checkMonsterBottomAlignment,
   logMonsterBottomAlignment,
@@ -212,8 +217,8 @@ export class SeatCustomer {
           width: art.native.width,
           height: art.native.height,
           layer: LayoutLayer.seats,
-          depthOffset: LayoutZOffset.monsterBody,
-          alphaIndex: LayoutAlphaIndex.monsterBody,
+          depthOffset: monsterBodyZOffsetForSeat(this._seatIndex),
+          alphaIndex: monsterBodyAlphaIndexForSeat(this._seatIndex),
           color: art.tint,
           imageUrl: art.idleUrl,
           imageBlend: "alphablend",
@@ -235,8 +240,8 @@ export class SeatCustomer {
           width: PLACEHOLDER_WIDTH,
           height: PLACEHOLDER_HEIGHT,
           layer: LayoutLayer.seats,
-          depthOffset: LayoutZOffset.monsterBody,
-          alphaIndex: LayoutAlphaIndex.monsterBody,
+          depthOffset: monsterBodyZOffsetForSeat(this._seatIndex),
+          alphaIndex: monsterBodyAlphaIndexForSeat(this._seatIndex),
           color: new Color3(0.38, 0.34, 0.48),
           label: "◉",
           labelFont: "bold 36px monospace",
@@ -292,6 +297,15 @@ export class SeatCustomer {
   setSeat(seatIndex: number, role: SeatRole): void {
     this._seatIndex = seatIndex;
     this._role = role;
+    this.syncSeatDrawOrder();
+  }
+
+  /** R → C → L paint order when queue shifts (see monsterLayout.ts). */
+  private syncSeatDrawOrder(): void {
+    applyMonsterSeatDrawOrder(
+      this._seatIndex,
+      this.planes.map((p) => p.mesh),
+    );
   }
 
   setOrderBubbleStyle(style: OrderBubbleStyle): void {
@@ -399,6 +413,8 @@ export class SeatCustomer {
       duration: durationSeconds,
       ease: "power2.inOut",
     }).then(() => {
+      this._seatIndex = seatIndex;
+      this.syncSeatDrawOrder();
       this.orderBubble?.setCenter(bubble.x, bubble.y);
       this.rageBubble?.setCenter(bubble.x, bubble.y);
     });

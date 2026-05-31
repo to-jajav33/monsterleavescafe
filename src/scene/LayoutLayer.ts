@@ -25,6 +25,10 @@ export const LayoutLayer = {
 export const LayoutZOffset = {
   /** Customer bodies on seats layer → z = 0.27 (behind counter top). */
   monsterBody: 0.07,
+  /** Z nudge by seat — R back, L front (pairs with monsterBodySeat* alphaIndex). */
+  monsterBodySeatR: 0.07,
+  monsterBodySeatC: 0.075,
+  monsterBodySeatL: 0.08,
   /** On seats layer → z = 0.29 (above monsters, below order bubbles). */
   counterTop: 0.09,
   /** Above monster body, below rage overlay. */
@@ -45,6 +49,10 @@ export const LayoutAlphaIndex = {
   ghostNpc: 5,
   /** Monsters — drawn before counter top within group 2. */
   monsterBody: 5,
+  /** Queue overlap paint order: R (back) → C → L (front). */
+  monsterBodySeatR: 5,
+  monsterBodySeatC: 6,
+  monsterBodySeatL: 7,
   counterTop: 10,
   shelfDecal: 12,
   /** Legacy alias — prefer orderBubble / rageBubble. */
