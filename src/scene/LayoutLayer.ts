@@ -41,6 +41,7 @@ export const LayoutZOffset = {
   menuSlot: (slot: 1 | 2 | 3) => 0.02 + slot * 0.01,
   hide: 0.05,
   boss: 0.06,
+  shiftTimer: 0.04,
 } as const;
 
 /** Transparent-pass sort: higher draws on top within the same rendering group. */
@@ -65,5 +66,7 @@ export const LayoutAlphaIndex = {
   menuSlot: (slot: 1 | 2 | 3) => 102 + slot,
   hide: 110,
   boss: 111,
+  shiftTimer: 112,
+  shiftEndOverlay: 130,
   titleMenuButton: 120,
 } as const;

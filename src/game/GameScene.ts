@@ -11,19 +11,32 @@ import { debugLog } from "../utils/debugLog.ts";
 import type { GameEngine } from "./GameEngine.ts";
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from "./GameEngine.ts";
 
+export type GameSceneOptions = {
+  /** Fired when the player dismisses the shift-end overlay (returns to title). */
+  onShiftComplete?: () => void;
+};
+
 /** Babylon scene configured for orthographic 2D. */
 export class GameScene {
   readonly scene: Scene;
   readonly camera: FreeCamera;
   private layout: CafeSceneLayout | null = null;
 
-  constructor(private readonly gameEngine: GameEngine) {
+  constructor(
+    private readonly gameEngine: GameEngine,
+    options: GameSceneOptions = {},
+  ) {
     debugLog("GameScene.constructor");
     this.scene = new Scene(gameEngine.engine);
     this.scene.clearColor = new Color4(0.18, 0.17, 0.2, 1);
     this.camera = this.createCamera();
     this.scene.activeCamera = this.camera;
-    this.layout = new CafeSceneLayout(this.scene, gameEngine, this.camera);
+    this.layout = new CafeSceneLayout(
+      this.scene,
+      gameEngine,
+      this.camera,
+      options.onShiftComplete,
+    );
   }
 
   private createCamera(): FreeCamera {

@@ -51,7 +51,9 @@ export class Game {
     debugLog("Game.beginGameplay()");
     this.titleMenu?.dispose();
     this.titleMenu = null;
-    this.gameScene = new GameScene(this.gameEngine);
+    this.gameScene = new GameScene(this.gameEngine, {
+      onShiftComplete: () => this.showTitleMenu(),
+    });
     debugLog("Game.beginGameplay() complete");
   }
 

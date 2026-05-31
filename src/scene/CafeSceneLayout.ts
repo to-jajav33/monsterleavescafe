@@ -1,4 +1,9 @@
 import type { Scene } from "@babylonjs/core/scene";
+import {
+  PointerEventTypes,
+  type PointerInfo,
+} from "@babylonjs/core/Events/pointerEvents";
+import type { Observer } from "@babylonjs/core/Misc/observable";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Vec2 } from "../utils/math.ts";
@@ -26,6 +31,8 @@ import { MenuBoard } from "./MenuBoard.ts";
 import { CounterFlashlightDecal } from "./CounterFlashlightDecal.ts";
 import { GhostNpcDecor } from "./GhostNpcDecor.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
+import { ShiftEndOverlay } from "./ShiftEndOverlay.ts";
+import { ShiftTimerHud } from "./ShiftTimerHud.ts";
 import {
   COUNTER_TOP_BRICK_ROW_FROM_BACK_WALL,
   COUNTER_TOP_CENTER,
@@ -53,12 +60,16 @@ export class CafeSceneLayout {
   private ghostNpc: GhostNpcDecor | null = null;
   private flashlightDecal: CounterFlashlightDecal | null = null;
   private gameplay: GameplayController | null = null;
+  private shiftTimerHud: ShiftTimerHud | null = null;
+  private shiftEndOverlay: ShiftEndOverlay | null = null;
+  private shiftEndPointerObserver: Observer<PointerInfo> | null = null;
   private readonly updateOrtho: () => void;
 
   constructor(
     private readonly scene: Scene,
     private readonly gameEngine: GameEngine,
     private readonly camera: FreeCamera,
+    private readonly onShiftComplete?: () => void,
   ) {
     debugLog("CafeSceneLayout.constructor");
     this.updateOrtho = () => {
@@ -79,7 +90,15 @@ export class CafeSceneLayout {
   }
 
   dispose(): void {
+    if (this.shiftEndPointerObserver) {
+      this.scene.onPointerObservable.remove(this.shiftEndPointerObserver);
+      this.shiftEndPointerObserver = null;
+    }
     this.gameEngine.offResize(this.updateOrtho);
+    this.shiftEndOverlay?.dispose();
+    this.shiftEndOverlay = null;
+    this.shiftTimerHud?.dispose();
+    this.shiftTimerHud = null;
     this.gameplay?.dispose();
     this.gameplay = null;
     this.ghostNpc?.dispose();
@@ -135,6 +154,9 @@ export class CafeSceneLayout {
     }
     this.buildSeatCustomers();
     this.buildExitFlow();
+    this.shiftTimerHud = new ShiftTimerHud(this.scene);
+    this.shiftEndOverlay = new ShiftEndOverlay(this.scene);
+    this.bindShiftEndDismiss();
     debugLog("CafeSceneLayout.build → creating MenuBoard");
     this.menuBoard = new MenuBoard(this.scene);
     debugLog(
@@ -145,6 +167,8 @@ export class CafeSceneLayout {
       this.scene,
       this.menuBoard,
       this.seatCustomers,
+      this.shiftTimerHud,
+      this.shiftEndOverlay,
     );
     this.buildHideButton();
     this.buildBossBell();
@@ -288,6 +312,21 @@ export class CafeSceneLayout {
       label: "Hide",
       labelFont: "bold 22px monospace",
     });
+  }
+
+  private bindShiftEndDismiss(): void {
+    this.shiftEndPointerObserver = this.scene.onPointerObservable.add(
+      (pointerInfo) => {
+        if (
+          pointerInfo.type !== PointerEventTypes.POINTERDOWN ||
+          !this.shiftEndOverlay?.isVisible
+        ) {
+          return;
+        }
+        debugLog("CafeSceneLayout: shift complete — return to title");
+        this.onShiftComplete?.();
+      },
+    );
   }
 
   private buildBossBell(): void {

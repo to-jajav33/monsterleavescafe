@@ -74,6 +74,7 @@ function planeWorldBounds(
 export class LayoutPlane {
   readonly mesh: Mesh;
   private imageTexture: Texture | null = null;
+  private labelTexture: DynamicTexture | null = null;
 
   constructor(
     private readonly scene: Scene,
@@ -123,9 +124,31 @@ export class LayoutPlane {
     return this.config.center.clone();
   }
 
+  /** Redraw label text (no-op if this plane has no label texture). */
+  updateLabel(text: string): void {
+    if (!this.labelTexture) {
+      return;
+    }
+    this.config.label = text;
+    const font =
+      this.config.labelFont ?? `bold ${Math.floor(this.config.height * 0.32)}px monospace`;
+    const textColor = this.config.labelTextColor ?? "#f8f8f2";
+    this.labelTexture.drawText(
+      text,
+      null,
+      null,
+      font,
+      textColor,
+      colorToHex(this.config.color),
+      true,
+    );
+  }
+
   dispose(): void {
     this.imageTexture?.dispose();
     this.imageTexture = null;
+    this.labelTexture?.dispose();
+    this.labelTexture = null;
     this.mesh.material?.dispose();
     this.mesh.dispose();
   }
@@ -194,7 +217,7 @@ export class LayoutPlane {
         mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
       }
       mat.alpha = this.config.imageOpacity ?? 1;
-    } else if (this.config.label) {
+    } else if (this.config.label !== undefined) {
       const tex = this.createLabelTexture();
       mat.diffuseTexture = tex;
       mat.emissiveTexture = tex;
@@ -221,6 +244,7 @@ export class LayoutPlane {
       this.scene,
       false,
     );
+    this.labelTexture = tex;
     const font =
       this.config.labelFont ?? `bold ${Math.floor(h * 0.32)}px monospace`;
     const textColor = this.config.labelTextColor ?? "#f8f8f2";

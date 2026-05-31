@@ -6,11 +6,15 @@ import type { SeatCustomer } from "../scene/SeatCustomer.ts";
 import { MenuController } from "../scene/MenuController.ts";
 import { debugLog } from "../utils/debugLog.ts";
 
+import type { ShiftEndOverlay } from "../scene/ShiftEndOverlay.ts";
+import type { ShiftTimerHud } from "../scene/ShiftTimerHud.ts";
+
 import { CounterQueue } from "./CounterQueue.ts";
 import { CustomerIntroController } from "./CustomerIntroController.ts";
 import { LineAdvanceController } from "./LineAdvanceController.ts";
 import { RageSystem } from "./RageSystem.ts";
 import { ServeResolver } from "./ServeResolver.ts";
+import { ShiftTimer } from "./ShiftTimer.ts";
 
 /** Phase 2+ gameplay systems (queue, serve targeting, menu input). */
 export class GameplayController {
@@ -18,6 +22,7 @@ export class GameplayController {
   private readonly resolver: ServeResolver;
   private readonly lineAdvance: LineAdvanceController;
   private readonly intro: CustomerIntroController;
+  private readonly shiftTimer: ShiftTimer;
   private readonly rage: RageSystem;
   private readonly input: SceneInputSystem;
   private readonly menu: MenuController;
@@ -26,6 +31,8 @@ export class GameplayController {
     scene: Scene,
     menuBoard: MenuBoard,
     customers: SeatCustomer[],
+    shiftTimerHud: ShiftTimerHud,
+    shiftEndOverlay: ShiftEndOverlay,
   ) {
     this.queue = new CounterQueue(customers);
     this.resolver = new ServeResolver(this.queue);
@@ -46,7 +53,11 @@ export class GameplayController {
       },
     );
     this.applyOrderBubbleStyles();
-    this.rage = new RageSystem(scene, this.queue, () => this.isQueueBusy);
+    this.shiftTimer = new ShiftTimer(scene, shiftTimerHud, () => {
+      shiftEndOverlay.show();
+      debugLog("GameplayController: shift ended — input frozen");
+    });
+    this.rage = new RageSystem(scene, this.queue, () => this.isGameplayPaused);
     this.input = new SceneInputSystem(scene, menuBoard);
     this.menu = new MenuController(
       scene,
@@ -54,7 +65,7 @@ export class GameplayController {
       this.resolver,
       this.input.map,
       {
-        canServe: () => !this.isQueueBusy,
+        canServe: () => this.canPlay,
         onServeComplete: (customer) => {
           this.lineAdvance.advanceAfterServe(customer);
         },
@@ -80,6 +91,14 @@ export class GameplayController {
     return this.lineAdvance.isBusy || this.intro.isBusy;
   }
 
+  private get canPlay(): boolean {
+    return !this.shiftTimer.isEnded && !this.isQueueBusy;
+  }
+
+  private get isGameplayPaused(): boolean {
+    return this.shiftTimer.isEnded || this.isQueueBusy;
+  }
+
   private applyOrderBubbleStyles(): void {
     for (const customer of this.queue.allCustomers) {
       customer.setOrderBubbleStyle(customer.isActive ? "active" : "queue");
@@ -87,6 +106,7 @@ export class GameplayController {
   }
 
   dispose(): void {
+    this.shiftTimer.dispose();
     this.intro.dispose();
     this.menu.dispose();
     this.rage.dispose();
