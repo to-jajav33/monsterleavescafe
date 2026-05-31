@@ -3,6 +3,7 @@ import type { Observer } from "@babylonjs/core/Misc/observable";
 
 import { pickRandomDrinkSlotExcept } from "./Drink.ts";
 import type { CounterQueue } from "./CounterQueue.ts";
+import type { MedusaHideController } from "./MedusaHideController.ts";
 import type { SeatCustomer } from "../scene/SeatCustomer.ts";
 import { debugLog } from "../utils/debugLog.ts";
 
@@ -23,6 +24,7 @@ export class RageSystem {
     private readonly queue: CounterQueue,
     private readonly isPaused: () => boolean,
     private readonly onJumpScare?: (customer: SeatCustomer) => void,
+    private readonly medusaHide?: MedusaHideController,
   ) {
     this.renderObserver = scene.onBeforeRenderObservable.add(() => {
       this.tick();
@@ -48,7 +50,11 @@ export class RageSystem {
         });
       }
 
-      if (customer.rageAtFull && !customer.rageAngerStarted) {
+      if (
+        customer.rageAtFull &&
+        !customer.rageAngerStarted &&
+        !this.medusaHide?.blocksRageFor(customer)
+      ) {
         customer.beginRageAnger({
           onJumpScare: () => this.onJumpScare?.(customer),
         });

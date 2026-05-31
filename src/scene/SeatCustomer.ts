@@ -27,6 +27,7 @@ import {
   bigfootSpriteCenterAtSeat,
 } from "./monsterBigfootAssets.ts";
 import {
+  MEDUSA_IDLE_FRAMES,
   MEDUSA_IDLE_NATIVE,
   MEDUSA_IDLE_URL,
   medusaOrderBubbleCenter,
@@ -193,8 +194,7 @@ export class SeatCustomer {
     this._seatIndex = config.seatIndex;
     this._drinkSlot = config.drinkSlot;
     this._role = config.role;
-    this.appearance =
-      config.appearance ?? defaultAppearance(config.seatIndex);
+    this.appearance = config.appearance ?? defaultAppearance(config.seatIndex);
 
     const seatX = SEAT_X[this._seatIndex]!;
     const drink = getDrinkBySlot(this._drinkSlot);
@@ -330,6 +330,24 @@ export class SeatCustomer {
 
   get isActive(): boolean {
     return this._role === "active";
+  }
+
+  get isMedusaCustomer(): boolean {
+    return this.appearance === "medusa_idle";
+  }
+
+  /** Swap Medusa body art during hide event (eyes frame is placeholder until glow asset). */
+  setMedusaBodyFrame(frame: "idle" | "eyes" | "stone"): void {
+    if (!this.isMedusaCustomer || !this.monsterBodyPlane) {
+      return;
+    }
+    const url =
+      frame === "eyes"
+        ? MEDUSA_IDLE_FRAMES.angry1
+        : frame === "stone"
+          ? MEDUSA_IDLE_FRAMES.stone
+          : MEDUSA_IDLE_FRAMES.idle;
+    this.monsterBodyPlane.setImageUrl(url);
   }
 
   get ragePercent(): number {
@@ -470,7 +488,10 @@ export class SeatCustomer {
   }
 
   /** X follows seat index (or override); art monster Y is frame-bottom only. */
-  private centersForSeat(seatIndex: number, centerX?: number): {
+  private centersForSeat(
+    seatIndex: number,
+    centerX?: number,
+  ): {
     monster: Vec2;
     bubble: Vec2;
   } {

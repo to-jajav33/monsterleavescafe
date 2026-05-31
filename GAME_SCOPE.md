@@ -147,10 +147,12 @@ After **3 Boss uses** exhausted, no more saves.
 
 ## Hide — Medusa event (decided)
 
-- **Hide** appears when **Medusa** is in play (customer/event).
-- Her **eyes glow red**; player must press **Hide** before petrification.
-- **Fail Hide** → separate **lose condition** (not a strike; does not use strike budget).
-- **Game over scene:** Boss angry — *“You’re fired for being stoned!”* (dedicated fired/stoned screen).
+Full phased spec: **[docs/MEDUSA_HIDE.md](./docs/MEDUSA_HIDE.md)**.
+
+- **Hide** when **active** customer is **Medusa** (once per Medusa, global event lock).
+- Telegraph (button pulse) → eyes glow → **0.5s** danger window → hold Hide/Space until safe.
+- **Fail Hide** → Lose 3 stoned game over (not a strike).
+- **Game over:** *“You’re fired for being stoned!”*
 
 ---
 

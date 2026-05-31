@@ -13,7 +13,7 @@ import {
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
-type OverlayMode = "shiftOver" | "fired";
+type OverlayMode = "shiftOver" | "fired" | "stoned";
 
 /** Defeat / shift-end UI with optional boss cutie loop. */
 export class ShiftEndOverlay {
@@ -88,6 +88,14 @@ export class ShiftEndOverlay {
     this.setVisible(true);
   }
 
+  /** Lose 3 — failed Medusa hide (stoned). */
+  showStoned(): void {
+    this.mode = "stoned";
+    this.subtitle.updateLabel("You're fired for being stoned! — click to continue");
+    this.applyLayoutPositions();
+    this.setVisible(true);
+  }
+
   private applyLayoutPositions(): void {
     if (this.mode === "fired") {
       this.firedTitle.mesh.position.y = GAMEOVER_FIRED_TITLE_Y;
@@ -100,9 +108,9 @@ export class ShiftEndOverlay {
 
   private setVisible(visible: boolean): void {
     this.visible = visible;
-    this.shiftOverTitle.mesh.isVisible =
-      visible && this.mode === "shiftOver";
-    this.firedTitle.mesh.isVisible = visible && this.mode === "fired";
+    this.shiftOverTitle.mesh.isVisible = visible && this.mode === "shiftOver";
+    this.firedTitle.mesh.isVisible =
+      visible && (this.mode === "fired" || this.mode === "stoned");
     this.subtitle.mesh.isVisible = visible;
     if (visible) {
       this.bossRunner.start();

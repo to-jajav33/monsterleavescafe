@@ -75,7 +75,9 @@ src/
 
 ## Game design specs
 
-See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Summary:
+See [GAME_SCOPE.md](./GAME_SCOPE.md) for full detail. Medusa hide (phased): [docs/MEDUSA_HIDE.md](./docs/MEDUSA_HIDE.md).
+
+Summary:
 
 | Area | Status | Notes |
 |------|--------|-------|

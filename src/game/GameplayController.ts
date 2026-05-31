@@ -15,6 +15,7 @@ import { LivesController } from "./LivesController.ts";
 import { JUMPSCARE_STRIKE_HOLD_SEC } from "./rageStrikeTiming.ts";
 import { LineAdvanceController } from "./LineAdvanceController.ts";
 import { QueueSpawnController } from "./QueueSpawnController.ts";
+import { MedusaHideController } from "./MedusaHideController.ts";
 import { RageSystem } from "./RageSystem.ts";
 import { ServeResolver } from "./ServeResolver.ts";
 import { ShiftTimer } from "./ShiftTimer.ts";
@@ -28,6 +29,7 @@ export class GameplayController {
   private readonly shiftTimer: ShiftTimer;
   private readonly lives: LivesController;
   private readonly rage: RageSystem;
+  private readonly medusaHide: MedusaHideController;
   private readonly input: SceneInputSystem;
   private readonly menu: MenuController;
   private readonly shiftEndOverlay: ShiftEndOverlay;
@@ -61,21 +63,24 @@ export class GameplayController {
       () => {
         this.applyOrderBubbleStyles();
       },
-      () =>
-        this.runLost ||
-        this.shiftTimer.isEnded ||
-        this.lineAdvance.isBusy,
+      () => this.runLost || this.shiftTimer.isEnded || this.lineAdvance.isBusy,
     );
     this.applyOrderBubbleStyles();
     this.lives = new LivesController(livesHud);
     this.shiftTimer = new ShiftTimer(scene, shiftTimerHud, () => {
       this.enterGameOver(() => shiftEndOverlay.show());
     });
+    this.medusaHide = new MedusaHideController(scene, this.queue, {
+      onStoned: () => {
+        this.enterGameOver(() => this.shiftEndOverlay.showStoned());
+      },
+    });
     this.rage = new RageSystem(
       scene,
       this.queue,
       () => this.isGameplayPaused,
       (customer) => this.handleRageStrike(customer),
+      this.medusaHide,
     );
     this.input = new SceneInputSystem(scene, menuBoard);
     this.menu = new MenuController(
@@ -106,9 +111,7 @@ export class GameplayController {
 
   private get canPlay(): boolean {
     return (
-      !this.runLost &&
-      !this.shiftTimer.isEnded &&
-      !this.lineAdvance.isBusy
+      !this.runLost && !this.shiftTimer.isEnded && !this.lineAdvance.isBusy
     );
   }
 
@@ -171,6 +174,7 @@ export class GameplayController {
     this.queueSpawn.dispose();
     this.shiftTimer.dispose();
     this.menu.dispose();
+    this.medusaHide.dispose();
     this.rage.dispose();
     this.input.dispose();
   }

@@ -188,7 +188,12 @@ export class CafeSceneLayout {
     debugLog("Seat customers:", this.seatCustomers.length);
     debugLog("MenuBoard planeCount:", this.menuBoard?.planeCount ?? "null");
     logCameraAndCanvas(this.scene, this.camera, this.gameEngine.engine);
-    logSeatLayoutAudit(this.scene, this.camera, this.gameEngine.engine, "build");
+    logSeatLayoutAudit(
+      this.scene,
+      this.camera,
+      this.gameEngine.engine,
+      "build",
+    );
     logSceneMeshes(this.scene);
     logDrawStack(this.scene);
     debugLog("=== end summary ===");
