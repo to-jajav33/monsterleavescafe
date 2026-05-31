@@ -40,11 +40,14 @@ export const COUNTER_TOP_BRICK_ROW_FROM_BACK_WALL = 8;
 
 /**
  * Counter-top **upper** edge in design space: **25% up from the bottom** of the
- * 1280×720 frame (same as **75% down from the top**).
+ * 1280×720 frame, then nudged down by {@link COUNTER_TOP_DOWN_OFFSET}.
  *
- * `y = orthoBottom + 0.25 × DESIGN_HEIGHT = -360 + 180 = -180`
+ * Base: `orthoBottom + 0.25 × DESIGN_HEIGHT = -360 + 180 = -180`
  */
-export const COUNTER_TOP_EDGE_Y = -DESIGN_HEIGHT / 2 + DESIGN_HEIGHT * 0.25;
+export const COUNTER_TOP_DOWN_OFFSET = 90;
+
+export const COUNTER_TOP_EDGE_Y =
+  -DESIGN_HEIGHT / 2 + DESIGN_HEIGHT * 0.25 - COUNTER_TOP_DOWN_OFFSET;
 
 export const COUNTER_TOP_WIDTH = DESIGN_WIDTH;
 export const COUNTER_TOP_HEIGHT =
@@ -65,7 +68,10 @@ export const FLASHLIGHT_NATIVE = {
 } as const;
 
 /** Middle shelf on counter front (right alcove, below cream top). */
-export const FLASHLIGHT_SHELF_CENTER = new Vec2(220, -402);
+export const FLASHLIGHT_SHELF_CENTER = new Vec2(
+  220,
+  -402 - COUNTER_TOP_DOWN_OFFSET,
+);
 
 export const FLASHLIGHT_DISPLAY_WIDTH = 96;
 export const FLASHLIGHT_DISPLAY_HEIGHT =
