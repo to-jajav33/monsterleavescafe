@@ -4,6 +4,8 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/mesh";
 
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from "../game/GameEngine.ts";
+import { logArtMonsterBottomAlignmentScan } from "../scene/monsterLayoutDebug.ts";
+import { MONSTER_FRAME_BOTTOM_Y } from "../scene/monsterLayout.ts";
 import {
   MONSTER_SEAT_PITCH,
   SLIME_IDLE_NATIVE,
@@ -102,6 +104,7 @@ export function logSeatLayoutTheory(): void {
     SEAT_R_X,
     SEAT_Y_markersOnly: SEAT_Y,
     ACTIVE_SEAT_INDEX,
+    MONSTER_FRAME_BOTTOM_Y,
   });
 
   if (MONSTER_SEAT_PITCH > DESIGN_WIDTH) {
@@ -314,6 +317,8 @@ export function logSeatLayoutMeshes(
       "  No monster_slime_idle_0 — Seat L slime not in scene (check appearance / build)",
     );
   }
+
+  logArtMonsterBottomAlignmentScan(scene, label);
 
   debugLog(`=== end SEAT LAYOUT MESHES (${label}) ===`);
 }

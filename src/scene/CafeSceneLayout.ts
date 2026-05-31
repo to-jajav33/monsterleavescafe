@@ -10,6 +10,7 @@ import {
   logDrawStack,
   logSceneMeshes,
 } from "../utils/sceneDebug.ts";
+import { logArtMonsterBottomAlignmentScan } from "./monsterLayoutDebug.ts";
 import {
   logSeatLayoutAudit,
   logSeatLayoutMeshes,
@@ -36,6 +37,9 @@ import {
 } from "./sceneAssets.ts";
 
 type PanelConfig = LayoutPlaneConfig;
+
+/** Set true to hide counter while checking feet vs frame bottom. */
+const DEBUG_HIDE_COUNTER = false;
 
 /**
  * Phase 1 mockup scene — layout, menu drinks, seat markers.
@@ -123,9 +127,13 @@ export class CafeSceneLayout {
     this.buildGhostNpc();
     this.buildExitSign();
     this.buildSeats();
-    this.buildCounter();
+    if (!DEBUG_HIDE_COUNTER) {
+      this.buildCounter();
+      this.buildFlashlightDecal();
+    } else {
+      debugLog("CafeSceneLayout: counter hidden (DEBUG_HIDE_COUNTER)");
+    }
     this.buildSeatCustomers();
-    this.buildFlashlightDecal();
     this.buildExitFlow();
     debugLog("CafeSceneLayout.build → creating MenuBoard");
     this.menuBoard = new MenuBoard(this.scene);
@@ -165,6 +173,9 @@ export class CafeSceneLayout {
         "textures-loaded",
       );
     }, 500);
+    globalThis.setTimeout(() => {
+      logArtMonsterBottomAlignmentScan(this.scene, "textures-loaded-800ms");
+    }, 800);
   }
 
   /** Full-design backdrop from `assets/image-bg.png`. */

@@ -33,6 +33,10 @@ import {
 } from "./monsterMedusaAssets.ts";
 import { MONSTER_FRAME_BOTTOM_Y } from "./monsterLayout.ts";
 import {
+  checkMonsterBottomAlignment,
+  logMonsterBottomAlignment,
+} from "./monsterLayoutDebug.ts";
+import {
   SLIME_IDLE_NATIVE,
   SLIME_IDLE_URL,
   slimeOrderBubbleCenter,
@@ -215,6 +219,14 @@ export class SeatCustomer {
           imageBlend: "alphablend",
         }),
       );
+      logMonsterBottomAlignment(
+        checkMonsterBottomAlignment(
+          this.planes[this.planes.length - 1]!.mesh,
+          art.native.height,
+          seatX,
+          this._seatIndex,
+        ),
+      );
     } else {
       this.planes.push(
         new LayoutPlane(scene, {
@@ -314,23 +326,24 @@ export class SeatCustomer {
     this.orderBubble?.flashMatch();
   }
 
+  /** X follows seat index; art monster Y is frame-bottom only (see monsterLayout.ts). */
   private centersForSeat(seatIndex: number): {
     monster: Vec2;
     bubble: Vec2;
   } {
-    const x = SEAT_X[seatIndex]!;
+    const seatX = SEAT_X[seatIndex]!;
     if (isArtMonster(this.appearance)) {
       const art = ART_MONSTERS[this.appearance];
       return {
-        monster: art.spriteCenterAtSeat(x),
-        bubble: art.orderBubbleCenter(x),
+        monster: art.spriteCenterAtSeat(seatX),
+        bubble: art.orderBubbleCenter(seatX),
       };
     }
-    const monster = new Vec2(x, PLACEHOLDER_MONSTER_CENTER_Y);
+    const monster = new Vec2(seatX, PLACEHOLDER_MONSTER_CENTER_Y);
     return {
       monster,
       bubble: bubbleCenterBesideMonster(
-        new Vec2(x, PLACEHOLDER_BUBBLE_ANCHOR_Y),
+        new Vec2(seatX, PLACEHOLDER_BUBBLE_ANCHOR_Y),
         PLACEHOLDER_WIDTH,
       ),
     };

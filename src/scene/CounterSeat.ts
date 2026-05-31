@@ -66,7 +66,7 @@ export class SeatMarker {
       role: config.role,
       center: { x, y: SEAT_Y },
       markerSpan: horizSpan(x, 130),
-      note: "Marker Y is SEAT_Y (-90), not slime counter Y (~95)",
+      note: "Marker Y is SEAT_Y (-90); art monsters use frame bottom in monsterLayout.ts",
     });
 
     this.planes.push(
