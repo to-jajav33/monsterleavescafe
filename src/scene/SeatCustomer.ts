@@ -2,7 +2,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 import { CustomerRage } from "../game/CustomerRage.ts";
-import { effectivePatienceSeconds } from "../game/debugGameplay.ts";
+import { patienceForRole } from "../game/debugGameplay.ts";
 import { getDrinkBySlot } from "../game/Drink.ts";
 import {
   BigfootMonster,
@@ -185,6 +185,7 @@ export class SeatCustomer {
   private _rageAngerStarted = false;
   private _rageInAngerWindow = false;
   private _rageOnJumpscare = false;
+  private _secondsOnActive = 0;
   private ragePlayback: RageOutPlayback | null = null;
 
   constructor(scene: Scene, config: SeatCustomerConfig) {
@@ -212,10 +213,14 @@ export class SeatCustomer {
     const { monster: monsterCenter, bubble: orderBubbleCenter } =
       this.centersForSeat(this._seatIndex, spawnX);
 
-    const patienceSeconds = effectivePatienceSeconds(
-      this.monster.patienceSeconds,
+    this._secondsOnActive = 0;
+    this.rage = new CustomerRage(
+      patienceForRole(
+        this.monster.patienceSeconds,
+        config.role,
+        this._secondsOnActive,
+      ),
     );
-    this.rage = new CustomerRage(patienceSeconds);
 
     const art = isArtMonster(this.appearance)
       ? ART_MONSTERS[this.appearance]
@@ -227,7 +232,7 @@ export class SeatCustomer {
       role: config.role,
       appearance: this.appearance,
       order: drink.shortLabel,
-      patience: patienceSeconds,
+      patience: this.rage.patienceSeconds,
       seatCenterX: seatX,
       monsterCenter: { x: monsterCenter.x, y: monsterCenter.y },
       orderBubbleCenter: {
@@ -354,9 +359,26 @@ export class SeatCustomer {
   }
 
   setSeat(seatIndex: number, role: SeatRole): void {
+    const prevRole = this._role;
     this._seatIndex = seatIndex;
     this._role = role;
     this.syncSeatDrawOrder();
+    if (prevRole !== role) {
+      if (role === "active") {
+        this._secondsOnActive = 0;
+      }
+      this.syncRagePatience();
+    }
+  }
+
+  private syncRagePatience(): void {
+    this.rage.setPatienceSeconds(
+      patienceForRole(
+        this.monster.patienceSeconds,
+        this._role,
+        this._secondsOnActive,
+      ),
+    );
   }
 
   /** R → C → L paint order when queue shifts (see monsterLayout.ts). */
@@ -372,6 +394,10 @@ export class SeatCustomer {
   }
 
   tickRage(deltaSeconds: number): void {
+    if (this.isActive) {
+      this._secondsOnActive += deltaSeconds;
+      this.syncRagePatience();
+    }
     this.rage.tick(deltaSeconds);
     this.rageBubble?.setRagePercent(this.rage.percent);
   }

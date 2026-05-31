@@ -2,8 +2,23 @@
 export class CustomerRage {
   private elapsed = 0;
   private _atFull = false;
+  private _patienceSeconds: number;
 
-  constructor(readonly patienceSeconds: number) {}
+  constructor(patienceSeconds: number) {
+    this._patienceSeconds = patienceSeconds;
+  }
+
+  get patienceSeconds(): number {
+    return this._patienceSeconds;
+  }
+
+  setPatienceSeconds(seconds: number): void {
+    this._patienceSeconds = seconds;
+    if (this.elapsed >= seconds) {
+      this._atFull = true;
+      this.elapsed = seconds;
+    }
+  }
 
   get percent(): number {
     return Math.min(1, this.elapsed / this.patienceSeconds);
