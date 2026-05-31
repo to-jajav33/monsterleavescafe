@@ -13,8 +13,8 @@ import type { ShiftTimerHud } from "../scene/ShiftTimerHud.ts";
 import { CounterQueue } from "./CounterQueue.ts";
 import { LivesController } from "./LivesController.ts";
 import { JUMPSCARE_STRIKE_HOLD_SEC } from "./rageStrikeTiming.ts";
-import { CustomerIntroController } from "./CustomerIntroController.ts";
 import { LineAdvanceController } from "./LineAdvanceController.ts";
+import { QueueSpawnController } from "./QueueSpawnController.ts";
 import { RageSystem } from "./RageSystem.ts";
 import { ServeResolver } from "./ServeResolver.ts";
 import { ShiftTimer } from "./ShiftTimer.ts";
@@ -24,7 +24,7 @@ export class GameplayController {
   private readonly queue: CounterQueue;
   private readonly resolver: ServeResolver;
   private readonly lineAdvance: LineAdvanceController;
-  private readonly intro: CustomerIntroController;
+  private readonly queueSpawn: QueueSpawnController;
   private readonly shiftTimer: ShiftTimer;
   private readonly lives: LivesController;
   private readonly rage: RageSystem;
@@ -53,18 +53,23 @@ export class GameplayController {
         this.applyOrderBubbleStyles();
       },
     );
-    this.intro = new CustomerIntroController(
+    this.queueSpawn = new QueueSpawnController(
       scene,
       this.queue,
       customers,
       () => {
         this.applyOrderBubbleStyles();
       },
+      () =>
+        this.runLost ||
+        this.shiftTimer.isEnded ||
+        this.lineAdvance.isBusy,
     );
     this.applyOrderBubbleStyles();
     this.lives = new LivesController(livesHud);
     this.shiftTimer = new ShiftTimer(scene, shiftTimerHud, () => {
       this.runLost = true;
+      this.queueSpawn.stop();
       shiftEndOverlay.show();
       debugLog("GameplayController: shift ended — input frozen");
     });
@@ -88,9 +93,7 @@ export class GameplayController {
       },
     );
 
-    if (customers.length === 0) {
-      this.intro.scheduleFirstArrival();
-    }
+    this.queueSpawn.start();
 
     debugLog("GameplayController ready", {
       activeSeat: this.queue.getActiveSeatIndex(),
@@ -99,12 +102,12 @@ export class GameplayController {
         seat: c.seatIndex,
         drink: c.drinkSlot,
       })),
-      awaitingFirstArrival: customers.length === 0,
+      queueSpawnIntervalSec: "0.5–1.5",
     });
   }
 
   private get isQueueBusy(): boolean {
-    return this.lineAdvance.isBusy || this.intro.isBusy;
+    return this.lineAdvance.isBusy || this.queueSpawn.isBusy;
   }
 
   private get canPlay(): boolean {
@@ -131,6 +134,7 @@ export class GameplayController {
     globalThis.setTimeout(() => {
       if (outOfLives) {
         this.runLost = true;
+        this.queueSpawn.stop();
         customer.clearRageOutPresentation();
         this.shiftEndOverlay.showOutOfLives();
         debugLog("GameplayController: out of lives — game over");
@@ -153,8 +157,8 @@ export class GameplayController {
   }
 
   dispose(): void {
+    this.queueSpawn.dispose();
     this.shiftTimer.dispose();
-    this.intro.dispose();
     this.menu.dispose();
     this.rage.dispose();
     this.input.dispose();
