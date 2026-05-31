@@ -1,3 +1,7 @@
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import gsap from "gsap";
+
+import { killMeshTweens } from "../utils/animateMeshes.ts";
 import type { LayoutPlane } from "./LayoutPlane.ts";
 import {
   BIGFOOT_IDLE_FRAMES,
@@ -14,12 +18,42 @@ import {
 import type { CustomerAppearance } from "./SeatCustomer.ts";
 import { debugLog } from "../utils/debugLog.ts";
 
-/** Boss forgive window — alternate angry frames for this duration (GAME_SCOPE). */
-export const RAGE_ANGER_DURATION_SEC = 0.5;
+/** Boss forgive window — alternate angry frames + shake for this duration. */
+export const RAGE_ANGER_DURATION_SEC = 1;
 
-const ANGRY_FLIP_COUNT = 4;
+const ANGRY_FLIP_COUNT = 8;
 const ANGRY_FLIP_INTERVAL_MS =
   (RAGE_ANGER_DURATION_SEC / ANGRY_FLIP_COUNT) * 1000;
+
+const SHAKE_AMPLITUDE_X = 14;
+const SHAKE_AMPLITUDE_Y = 4;
+const SHAKE_STEP_SEC = 0.06;
+
+function startAngerShake(mesh: Mesh): () => void {
+  const baseX = mesh.position.x;
+  const baseY = mesh.position.y;
+  const timeline = gsap.timeline({ repeat: -1 });
+  timeline
+    .to(mesh.position, {
+      x: baseX + SHAKE_AMPLITUDE_X,
+      y: baseY + SHAKE_AMPLITUDE_Y,
+      duration: SHAKE_STEP_SEC,
+      ease: "none",
+    })
+    .to(mesh.position, {
+      x: baseX - SHAKE_AMPLITUDE_X,
+      y: baseY - SHAKE_AMPLITUDE_Y,
+      duration: SHAKE_STEP_SEC,
+      ease: "none",
+    });
+
+  return () => {
+    timeline.kill();
+    killMeshTweens([mesh]);
+    mesh.position.x = baseX;
+    mesh.position.y = baseY;
+  };
+}
 
 export type MonsterRageFrameSet = {
   idle: string;
@@ -65,7 +99,7 @@ export type RageOutPlayback = {
 };
 
 /**
- * 0.5s angry flip (angry1 ↔ angry2), then hold jumpscare until cancelled or idle restore.
+ * 1.0s angry flip (angry1 ↔ angry2) with body shake, then hold jumpscare until idle restore.
  */
 export function playMonsterRageOut(
   body: LayoutPlane,
@@ -76,6 +110,14 @@ export function playMonsterRageOut(
   let flipIndex = 0;
   let flipTimer: ReturnType<typeof setTimeout> | null = null;
   let cancelled = false;
+  const stopShake = startAngerShake(body.mesh);
+
+  const endAnger = (): void => {
+    stopShake();
+    body.setImageUrl(frames.jumpScare);
+    hooks?.onAngerComplete?.();
+    debugLog("MonsterRageAnimation: jumpscare", { jumpScare: frames.jumpScare });
+  };
 
   const clearFlipTimer = (): void => {
     if (flipTimer !== null) {
@@ -96,14 +138,13 @@ export function playMonsterRageOut(
       return;
     }
     clearFlipTimer();
-    body.setImageUrl(frames.jumpScare);
-    hooks?.onAngerComplete?.();
-    debugLog("MonsterRageAnimation: jumpscare", { jumpScare: frames.jumpScare });
+    endAnger();
   };
 
   debugLog("MonsterRageAnimation: angry start", {
     durationSec: RAGE_ANGER_DURATION_SEC,
     flips: ANGRY_FLIP_COUNT,
+    shake: true,
   });
   showAngryFrame();
 
@@ -111,6 +152,7 @@ export function playMonsterRageOut(
     cancel: () => {
       cancelled = true;
       clearFlipTimer();
+      stopShake();
     },
   };
 }

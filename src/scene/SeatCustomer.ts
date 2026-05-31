@@ -2,6 +2,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 import { CustomerRage } from "../game/CustomerRage.ts";
+import { effectivePatienceSeconds } from "../game/debugGameplay.ts";
 import { getDrinkBySlot } from "../game/Drink.ts";
 import {
   BigfootMonster,
@@ -209,7 +210,10 @@ export class SeatCustomer {
     const { monster: monsterCenter, bubble: orderBubbleCenter } =
       this.centersForSeat(this._seatIndex, spawnX);
 
-    this.rage = new CustomerRage(this.monster.patienceSeconds);
+    const patienceSeconds = effectivePatienceSeconds(
+      this.monster.patienceSeconds,
+    );
+    this.rage = new CustomerRage(patienceSeconds);
 
     const art = isArtMonster(this.appearance)
       ? ART_MONSTERS[this.appearance]
@@ -221,7 +225,7 @@ export class SeatCustomer {
       role: config.role,
       appearance: this.appearance,
       order: drink.shortLabel,
-      patience: this.monster.patienceSeconds,
+      patience: patienceSeconds,
       seatCenterX: seatX,
       monsterCenter: { x: monsterCenter.x, y: monsterCenter.y },
       orderBubbleCenter: {
@@ -331,7 +335,7 @@ export class SeatCustomer {
     return this._rageAngerStarted;
   }
 
-  /** True during the 0.5s angry flip — Boss forgive window (GAME_SCOPE). */
+  /** True during the 1.0s angry flip + shake — Boss forgive window. */
   get isInRageAngerWindow(): boolean {
     return this._rageInAngerWindow;
   }
