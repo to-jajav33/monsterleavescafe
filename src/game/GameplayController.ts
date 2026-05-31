@@ -109,6 +109,11 @@ export class GameplayController {
     });
   }
 
+  /** Medusa hide telegraph — drives Hide button glow. */
+  get isHideButtonPulsing(): boolean {
+    return this.medusaHide.isHideButtonPulsing;
+  }
+
   private get canPlay(): boolean {
     return (
       !this.runLost && !this.shiftTimer.isEnded && !this.lineAdvance.isBusy

@@ -29,6 +29,7 @@ import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { CounterFlashlightDecal } from "./CounterFlashlightDecal.ts";
+import { HideButtonPulse } from "./HideButtonPulse.ts";
 import { GhostNpcDecor } from "./GhostNpcDecor.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
 import { LivesHud } from "./LivesHud.ts";
@@ -64,6 +65,7 @@ export class CafeSceneLayout {
   private shiftTimerHud: ShiftTimerHud | null = null;
   private livesHud: LivesHud | null = null;
   private shiftEndOverlay: ShiftEndOverlay | null = null;
+  private hideButtonPulse: HideButtonPulse | null = null;
   private shiftEndPointerObserver: Observer<PointerInfo> | null = null;
   private readonly updateOrtho: () => void;
 
@@ -103,6 +105,8 @@ export class CafeSceneLayout {
     this.shiftTimerHud = null;
     this.livesHud?.dispose();
     this.livesHud = null;
+    this.hideButtonPulse?.dispose();
+    this.hideButtonPulse = null;
     this.gameplay?.dispose();
     this.gameplay = null;
     this.ghostNpc?.dispose();
@@ -177,6 +181,7 @@ export class CafeSceneLayout {
       this.livesHud,
     );
     this.buildHideButton();
+    this.wireHideButtonPulse();
     this.buildBossBell();
   }
 
@@ -322,7 +327,25 @@ export class CafeSceneLayout {
       color: new Color3(0.48, 0.52, 0.62),
       label: "Hide",
       labelFont: "bold 22px monospace",
+      pickable: true,
+      sortTransparent: true,
     });
+  }
+
+  private wireHideButtonPulse(): void {
+    const buttonPlane = this.planes.find(
+      (p) => p.mesh.name === "layout_hide_button",
+    );
+    if (!buttonPlane || !this.gameplay) {
+      debugLog("CafeSceneLayout: hide button pulse skipped (no mesh/gameplay)");
+      return;
+    }
+    this.hideButtonPulse = new HideButtonPulse(
+      this.scene,
+      buttonPlane.mesh,
+      () => this.gameplay!.isHideButtonPulsing,
+    );
+    debugLog("CafeSceneLayout: hide button pulse wired");
   }
 
   private bindShiftEndDismiss(): void {
