@@ -71,6 +71,7 @@ export class Game {
     this.titleMenu = null;
     this.tutorial?.dispose();
     this.tutorial = null;
+    getRequiredCanvas(this.canvasId).focus();
     this.gameScene = new GameScene(this.gameEngine, {
       onShiftComplete: () => this.showTitleMenu(),
     });

@@ -104,16 +104,21 @@ export class GameplayController {
     });
   }
 
-  private get isQueueBusy(): boolean {
-    return this.lineAdvance.isBusy || this.queueSpawn.isBusy;
-  }
-
   private get canPlay(): boolean {
-    return !this.runLost && !this.shiftTimer.isEnded && !this.isQueueBusy;
+    return (
+      !this.runLost &&
+      !this.shiftTimer.isEnded &&
+      !this.lineAdvance.isBusy
+    );
   }
 
   private get isGameplayPaused(): boolean {
-    return this.runLost || this.shiftTimer.isEnded || this.isQueueBusy;
+    return (
+      this.runLost ||
+      this.shiftTimer.isEnded ||
+      this.lineAdvance.isBusy ||
+      this.queueSpawn.isBusy
+    );
   }
 
   private enterGameOver(showOverlay: () => void): void {

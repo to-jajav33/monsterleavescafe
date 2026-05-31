@@ -1,9 +1,4 @@
 import type { Scene } from "@babylonjs/core/scene";
-import {
-  KeyboardEventTypes,
-  type KeyboardInfo,
-} from "@babylonjs/core/Events/keyboardEvents";
-import type { Observer } from "@babylonjs/core/Misc/observable";
 
 import { debugLog } from "../utils/debugLog.ts";
 
@@ -12,39 +7,86 @@ import type { InputPhase } from "./InputTypes.ts";
 
 const MENU_KEYS = new Set(["1", "2", "3"]);
 
-/**
- * Emits raw keyboard events for 1 / 2 / 3 into the {@link InputMap}.
- */
-export class KeyboardInputProvider {
-  private readonly observer: Observer<KeyboardInfo>;
+type KeyboardLike = {
+  key?: string;
+  code?: string;
+  keyCode?: number;
+  repeat?: boolean;
+};
 
-  constructor(
-    private readonly scene: Scene,
-    private readonly inputMap: InputMap,
-  ) {
-    this.observer = scene.onKeyboardObservable.add((info) => {
-      this.onKeyboard(info);
-    });
-    debugLog("KeyboardInputProvider ready (keys 1, 2, 3)");
+/** Map DOM / Babylon keyboard events to menu keys 1–3. */
+export function menuKeyFromKeyboardEvent(event: KeyboardLike): string | null {
+  const key = event.key;
+  if (key && MENU_KEYS.has(key)) {
+    return key;
   }
 
-  private onKeyboard(info: KeyboardInfo): void {
-    const key = info.event.key;
-    if (!MENU_KEYS.has(key)) {
-      return;
+  switch (event.code) {
+    case "Digit1":
+    case "Numpad1":
+      return "1";
+    case "Digit2":
+    case "Numpad2":
+      return "2";
+    case "Digit3":
+    case "Numpad3":
+      return "3";
+  }
+
+  switch (event.keyCode) {
+    case 49:
+    case 97:
+      return "1";
+    case 50:
+    case 98:
+      return "2";
+    case 51:
+    case 99:
+      return "3";
+  }
+
+  return null;
+}
+
+/**
+ * Emits raw keyboard events for 1 / 2 / 3 into the {@link InputMap}.
+ * Listens on the render canvas so keys work whenever the game has focus.
+ */
+export class KeyboardInputProvider {
+  private readonly canvas: HTMLCanvasElement | null;
+  private readonly onCanvasKeyDown: (event: KeyboardEvent) => void;
+  private readonly onCanvasKeyUp: (event: KeyboardEvent) => void;
+
+  constructor(
+    scene: Scene,
+    private readonly inputMap: InputMap,
+  ) {
+    this.canvas = scene.getEngine().getRenderingCanvas() as HTMLCanvasElement | null;
+
+    this.onCanvasKeyDown = (event) => this.handleDomKey(event, "pressed");
+    this.onCanvasKeyUp = (event) => this.handleDomKey(event, "released");
+    this.canvas?.addEventListener("keydown", this.onCanvasKeyDown);
+    this.canvas?.addEventListener("keyup", this.onCanvasKeyUp);
+
+    if (!scene.isDisposed) {
+      scene.attachControl();
     }
 
-    if (info.type === KeyboardEventTypes.KEYDOWN && info.event.repeat) {
+    debugLog("KeyboardInputProvider ready (keys 1, 2, 3)", {
+      canvas: this.canvas?.id ?? null,
+    });
+  }
+
+  private handleDomKey(event: KeyboardEvent, phase: InputPhase): void {
+    if (phase === "pressed" && event.repeat) {
       return;
     }
+    this.dispatchFromEvent(event, phase);
+  }
 
-    let phase: InputPhase | null = null;
-    if (info.type === KeyboardEventTypes.KEYDOWN) {
-      phase = "pressed";
-    } else if (info.type === KeyboardEventTypes.KEYUP) {
-      phase = "released";
-    }
-    if (!phase) {
+  private dispatchFromEvent(event: KeyboardLike, phase: InputPhase): void {
+    const key = menuKeyFromKeyboardEvent(event);
+    if (!key) {
       return;
     }
 
@@ -55,6 +97,7 @@ export class KeyboardInputProvider {
   }
 
   dispose(): void {
-    this.scene.onKeyboardObservable.remove(this.observer);
+    this.canvas?.removeEventListener("keydown", this.onCanvasKeyDown);
+    this.canvas?.removeEventListener("keyup", this.onCanvasKeyUp);
   }
 }
