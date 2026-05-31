@@ -12,3 +12,32 @@ export const LayoutLayer = {
   /** Menu, drink slots, Hide, BOSS — must share group 3; use depthOffset / build order for stacking */
   ui: 3,
 } as const;
+
+/**
+ * Z nudge within a layer (`mesh.z = layer * 0.1 + offset`). Higher = drawn on top.
+ *
+ * Counter **art** uses {@link LayoutLayer.seats} (group 2), not group 3 — Babylon
+ * draws transparent PNGs after opaque meshes in the same group, which buried the menu.
+ * Group 3 UI always renders after group 2.
+ */
+export const LayoutZOffset = {
+  /** On seats layer → z = 0.29 (above monsters, below order bubbles). */
+  counterTop: 0.09,
+  menuBoard: 0,
+  menuTitle: 0.01,
+  menuSlot: (slot: 1 | 2 | 3) => 0.02 + slot * 0.01,
+  hide: 0.05,
+  boss: 0.06,
+} as const;
+
+/** Transparent-pass sort: higher draws on top within the same rendering group. */
+export const LayoutAlphaIndex = {
+  background: 0,
+  counterTop: 10,
+  seatContent: 20,
+  menuBoard: 100,
+  menuTitle: 101,
+  menuSlot: (slot: 1 | 2 | 3) => 102 + slot,
+  hide: 110,
+  boss: 111,
+} as const;

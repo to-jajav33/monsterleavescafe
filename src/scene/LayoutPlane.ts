@@ -3,25 +3,34 @@ import type { Scene } from "@babylonjs/core/scene";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
+import { Material } from "@babylonjs/core/Materials/material";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 
-import { debugLog } from "../utils/debugLog.ts";
+import { debugLog, debugWarn } from "../utils/debugLog.ts";
 import { Vec2 } from "../utils/math.ts";
+
+export type ImageBlendMode = "alphablend" | "alphatest";
 
 export type LayoutPlaneConfig = {
   name: string;
   center: Vec2;
   width: number;
   height: number;
-  /** Babylon renderingGroupId — higher draws on top (2D layer order). */
+  /** Babylon renderingGroupId — higher group draws after lower (0–3). */
   layer: number;
   /** Nudge along Z within a layer to avoid coplanar z-fighting (default 0). */
   depthOffset?: number;
+  /** Sort order within transparent pass; higher draws later (on top). */
+  alphaIndex?: number;
   color: Color3;
   /** PNG/JPG in world space (e.g. `/assets/image-bg.png`). */
   imageUrl?: string;
+  /** How PNG alpha is applied (default alphablend). */
+  imageBlend?: ImageBlendMode;
+  /** Cutoff for alphatest mode (default 0.35). */
+  imageAlphaCutoff?: number;
   /** Drawn on the mesh texture — moves/scales with this plane (not screen GUI). */
   label?: string;
   labelFont?: string;
@@ -37,6 +46,19 @@ function colorToHex(color: Color3): string {
   return `rgb(${r},${g},${b})`;
 }
 
+function planeWorldBounds(
+  center: Vec2,
+  width: number,
+  height: number,
+): Record<string, number> {
+  return {
+    top: center.y + height / 2,
+    bottom: center.y - height / 2,
+    left: center.x - width / 2,
+    right: center.x + width / 2,
+  };
+}
+
 /**
  * Static panel in world/design space. Labels use DynamicTexture on the same mesh.
  */
@@ -48,27 +70,35 @@ export class LayoutPlane {
     private readonly scene: Scene,
     private readonly config: LayoutPlaneConfig,
   ) {
-    const { name, center, width, height, layer, depthOffset = 0 } = config;
-    this.mesh = MeshBuilder.CreatePlane(
+    const {
       name,
-      { width, height },
-      scene,
-    );
-    // Layer-based Z keeps 2D stacks ordered; counter was burying UI at the same Z
+      center,
+      width,
+      height,
+      layer,
+      depthOffset = 0,
+      alphaIndex = 0,
+    } = config;
+    this.mesh = MeshBuilder.CreatePlane(name, { width, height }, scene);
     const z = layer * 0.1 + depthOffset;
     this.mesh.position = new Vector3(center.x, center.y, z);
     this.mesh.renderingGroupId = layer;
+    this.mesh.alphaIndex = alphaIndex;
     this.mesh.isPickable = config.pickable ?? false;
     this.applyMaterial();
 
-    if (/menu|hide|boss/i.test(name)) {
+    if (/layout_scene|layout_counter|menu|hide|boss/i.test(name)) {
       debugLog("LayoutPlane created:", {
         name,
         center: { x: center.x, y: center.y },
         size: { width, height },
+        worldBounds: planeWorldBounds(center, width, height),
         layer,
         z,
-        label: config.label ?? "(none)",
+        alphaIndex,
+        imageUrl: config.imageUrl ?? null,
+        imageBlend: config.imageBlend ?? null,
+        label: config.label ?? null,
       });
     }
   }
@@ -91,9 +121,33 @@ export class LayoutPlane {
     mat.disableDepthWrite = true;
 
     if (this.config.imageUrl) {
-      const tex = new Texture(this.config.imageUrl, this.scene, {
-        invertY: true,
-      });
+      const blend = this.config.imageBlend ?? "alphablend";
+      const url = this.config.imageUrl;
+
+      const tex = new Texture(
+        url,
+        this.scene,
+        {
+          invertY: true,
+          onLoad: () => {
+            const size = tex.getSize();
+            debugLog("LayoutPlane texture loaded:", {
+              mesh: this.config.name,
+              url,
+              width: size.width,
+              height: size.height,
+              blend,
+            });
+          },
+          onError: (_message, exception) => {
+            debugWarn("LayoutPlane texture FAILED:", {
+              mesh: this.config.name,
+              url,
+              exception,
+            });
+          },
+        },
+      );
       tex.hasAlpha = true;
       tex.wrapU = Texture.CLAMP_ADDRESSMODE;
       tex.wrapV = Texture.CLAMP_ADDRESSMODE;
@@ -103,6 +157,13 @@ export class LayoutPlane {
       mat.diffuseColor = Color3.White();
       mat.emissiveColor = Color3.White();
       mat.useAlphaFromDiffuseTexture = true;
+
+      if (blend === "alphatest") {
+        mat.transparencyMode = Material.MATERIAL_ALPHATEST;
+        mat.alphaCutOff = this.config.imageAlphaCutoff ?? 0.35;
+      } else {
+        mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
+      }
     } else if (this.config.label) {
       const tex = this.createLabelTexture();
       mat.diffuseTexture = tex;

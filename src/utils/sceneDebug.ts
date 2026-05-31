@@ -2,11 +2,32 @@ import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import type { Engine } from "@babylonjs/core/Engines/engine";
 import type { Scene } from "@babylonjs/core/scene";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/mesh";
+import type { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 
 import { debugLog, debugWarn } from "./debugLog.ts";
 
+function materialSummary(mat: StandardMaterial | null): Record<string, unknown> {
+  if (!mat) {
+    return {};
+  }
+  return {
+    materialName: mat.name,
+    transparencyMode: mat.transparencyMode,
+    alpha: mat.alpha,
+    alphaCutOff: mat.alphaCutOff,
+    useAlphaFromDiffuseTexture: mat.useAlphaFromDiffuseTexture,
+    disableDepthWrite: mat.disableDepthWrite,
+    hasDiffuseTexture: !!mat.diffuseTexture,
+    diffuseTextureName: mat.diffuseTexture?.name,
+  };
+}
+
 function meshSummary(mesh: AbstractMesh): Record<string, unknown> {
-  const mat = mesh.material;
+  const mat = mesh.material as StandardMaterial | null;
+  const halfH =
+    mesh.getBoundingInfo().boundingBox.extendSize.y * mesh.scaling.y;
+  const halfW =
+    mesh.getBoundingInfo().boundingBox.extendSize.x * mesh.scaling.x;
   return {
     name: mesh.name,
     pos: {
@@ -14,15 +35,17 @@ function meshSummary(mesh: AbstractMesh): Record<string, unknown> {
       y: mesh.position.y.toFixed(1),
       z: mesh.position.z.toFixed(3),
     },
+    bounds: {
+      top: (mesh.position.y + halfH).toFixed(1),
+      bottom: (mesh.position.y - halfH).toFixed(1),
+      left: (mesh.position.x - halfW).toFixed(1),
+      right: (mesh.position.x + halfW).toFixed(1),
+    },
     renderingGroupId: mesh.renderingGroupId,
+    alphaIndex: mesh.alphaIndex,
     enabled: mesh.isEnabled(),
     visible: mesh.isVisible,
-    hasMaterial: !!mat,
-    materialName: mat?.name,
-    disableDepthWrite:
-      mat && "disableDepthWrite" in mat
-        ? (mat as { disableDepthWrite: boolean }).disableDepthWrite
-        : undefined,
+    ...materialSummary(mat),
   };
 }
 
@@ -37,6 +60,9 @@ export function logSceneMeshes(
     "boss",
     "layout_",
     "seat_",
+    "monster",
+    "order_bubble",
+    "rage_bubble",
   ];
   const matches = scene.meshes.filter((m) =>
     needles.some((n) => m.name.toLowerCase().includes(n.toLowerCase())),
@@ -53,6 +79,29 @@ export function logSceneMeshes(
   if (menuSlots.length === 0) {
     debugWarn("NO menu_slot_* meshes in scene — MenuBoard may not have run");
   }
+}
+
+/** Draw order: renderingGroupId → alphaIndex → mesh name. */
+export function logDrawStack(scene: Scene): void {
+  const sorted = [...scene.meshes]
+    .filter((m) => m.name && !m.name.startsWith("__"))
+    .sort((a, b) => {
+      if (a.renderingGroupId !== b.renderingGroupId) {
+        return a.renderingGroupId - b.renderingGroupId;
+      }
+      if (a.alphaIndex !== b.alphaIndex) {
+        return a.alphaIndex - b.alphaIndex;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+  debugLog("=== Draw stack (group → alphaIndex → name) ===");
+  for (const mesh of sorted) {
+    debugLog(
+      `  [g${mesh.renderingGroupId} α${mesh.alphaIndex}] ${mesh.name} z=${mesh.position.z.toFixed(3)}`,
+    );
+  }
+  debugLog("=== end draw stack ===");
 }
 
 export function logCameraAndCanvas(

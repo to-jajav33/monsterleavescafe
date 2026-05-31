@@ -5,20 +5,33 @@ import { Vec2 } from "../utils/math.ts";
 import type { GameEngine } from "../game/GameEngine.ts";
 import { DESIGN_HEIGHT, DESIGN_WIDTH } from "../game/GameEngine.ts";
 import { debugLog } from "../utils/debugLog.ts";
-import { logCameraAndCanvas, logSceneMeshes } from "../utils/sceneDebug.ts";
+import {
+  logCameraAndCanvas,
+  logDrawStack,
+  logSceneMeshes,
+} from "../utils/sceneDebug.ts";
 import { createContainViewport } from "../utils/containViewport.ts";
 import { DRINK_MENU } from "../game/Drink.ts";
 
 import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
+import { PHASE1_DEMO_CUSTOMERS, SeatCustomer } from "./SeatCustomer.ts";
 import {
-  PHASE1_DEMO_CUSTOMERS,
-  SeatCustomer,
-} from "./SeatCustomer.ts";
-import { LayoutLayer } from "./LayoutLayer.ts";
+  LayoutAlphaIndex,
+  LayoutLayer,
+  LayoutZOffset,
+} from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
-import { SCENE_BACKGROUND_URL } from "./sceneAssets.ts";
+import {
+  COUNTER_TOP_BRICK_ROW_FROM_BACK_WALL,
+  COUNTER_TOP_CENTER,
+  COUNTER_TOP_EDGE_Y,
+  COUNTER_TOP_HEIGHT,
+  COUNTER_TOP_WIDTH,
+  SCENE_BACKGROUND_URL,
+  SCENE_COUNTER_TOP_URL,
+} from "./sceneAssets.ts";
 
 type PanelConfig = LayoutPlaneConfig;
 
@@ -84,10 +97,7 @@ export class CafeSceneLayout {
     this.camera.orthoRight = halfW;
     this.camera.orthoTop = halfH;
     this.camera.orthoBottom = -halfH;
-    this.camera.viewport = createContainViewport(
-      canvas.width,
-      canvas.height,
-    );
+    this.camera.viewport = createContainViewport(canvas.width, canvas.height);
   }
 
   private add(config: PanelConfig): void {
@@ -97,13 +107,16 @@ export class CafeSceneLayout {
   private build(): void {
     this.buildSceneBackground();
     this.buildExitSign();
-    this.buildCounter();
     this.buildSeats();
     this.buildSeatCustomers();
+    this.buildCounter();
     this.buildExitFlow();
     debugLog("CafeSceneLayout.build → creating MenuBoard");
     this.menuBoard = new MenuBoard(this.scene);
-    debugLog("CafeSceneLayout.build → MenuBoard planeCount", this.menuBoard.planeCount);
+    debugLog(
+      "CafeSceneLayout.build → MenuBoard planeCount",
+      this.menuBoard.planeCount,
+    );
     this.gameplay = new GameplayController(
       this.scene,
       this.menuBoard,
@@ -122,12 +135,18 @@ export class CafeSceneLayout {
     debugLog("MenuBoard planeCount:", this.menuBoard?.planeCount ?? "null");
     logCameraAndCanvas(this.scene, this.camera, this.gameEngine.engine);
     logSceneMeshes(this.scene);
+    logDrawStack(this.scene);
     debugLog("=== end summary ===");
   }
 
   /** Full-design backdrop from `assets/image-bg.png`. */
   private buildSceneBackground(): void {
     debugLog("CafeSceneLayout.build → scene background", SCENE_BACKGROUND_URL);
+    const bgBounds = {
+      top: DESIGN_HEIGHT / 2,
+      bottom: -DESIGN_HEIGHT / 2,
+    };
+    debugLog("Scene background world bounds (floor in texture):", bgBounds);
     this.add({
       name: "layout_scene_background",
       center: new Vec2(0, 0),
@@ -135,8 +154,10 @@ export class CafeSceneLayout {
       height: DESIGN_HEIGHT,
       layer: LayoutLayer.backWall,
       depthOffset: -0.02,
+      alphaIndex: LayoutAlphaIndex.background,
       color: new Color3(0.2, 0.18, 0.22),
       imageUrl: SCENE_BACKGROUND_URL,
+      imageBlend: "alphablend",
     });
   }
 
@@ -154,21 +175,34 @@ export class CafeSceneLayout {
   }
 
   private buildCounter(): void {
-    this.add({
-      name: "layout_counter",
-      center: new Vec2(0, -260),
-      width: 1280,
-      height: 200,
-      layer: LayoutLayer.counter,
-      color: new Color3(0.52, 0.4, 0.28),
+    const counterBounds = {
+      top: COUNTER_TOP_EDGE_Y,
+      bottom: COUNTER_TOP_CENTER.y - COUNTER_TOP_HEIGHT / 2,
+      left: -COUNTER_TOP_WIDTH / 2,
+      right: COUNTER_TOP_WIDTH / 2,
+    };
+    debugLog("CafeSceneLayout.build → counter top", {
+      url: SCENE_COUNTER_TOP_URL,
+      brickRowFromBackWall: COUNTER_TOP_BRICK_ROW_FROM_BACK_WALL,
+      topEdgeY: COUNTER_TOP_EDGE_Y,
+      center: { x: COUNTER_TOP_CENTER.x, y: COUNTER_TOP_CENTER.y },
+      size: { width: COUNTER_TOP_WIDTH, height: COUNTER_TOP_HEIGHT },
+      worldBounds: counterBounds,
+      renderGroup: LayoutLayer.seats,
+      alphaIndex: LayoutAlphaIndex.counterTop,
+      note: "alphablend + transparent PNG — floor shows through non-opaque pixels",
     });
     this.add({
       name: "layout_counter_top",
-      center: new Vec2(0, -170),
-      width: 1200,
-      height: 24,
-      layer: LayoutLayer.counter,
+      center: COUNTER_TOP_CENTER,
+      width: COUNTER_TOP_WIDTH,
+      height: COUNTER_TOP_HEIGHT,
+      layer: LayoutLayer.seats,
+      depthOffset: LayoutZOffset.counterTop,
+      alphaIndex: LayoutAlphaIndex.counterTop,
       color: new Color3(0.65, 0.5, 0.35),
+      imageUrl: SCENE_COUNTER_TOP_URL,
+      imageBlend: "alphablend",
     });
   }
 
@@ -181,7 +215,10 @@ export class CafeSceneLayout {
 
   /** Placeholder monsters + static order bubbles (Phase 1 item 3). */
   private buildSeatCustomers(): void {
-    debugLog("CafeSceneLayout.build → seat customers", PHASE1_DEMO_CUSTOMERS.length);
+    debugLog(
+      "CafeSceneLayout.build → seat customers",
+      PHASE1_DEMO_CUSTOMERS.length,
+    );
     for (const config of PHASE1_DEMO_CUSTOMERS) {
       this.seatCustomers.push(new SeatCustomer(this.scene, config));
     }
@@ -207,7 +244,8 @@ export class CafeSceneLayout {
       width: 130,
       height: 52,
       layer: LayoutLayer.ui,
-      depthOffset: 0.05,
+      depthOffset: LayoutZOffset.hide,
+      alphaIndex: LayoutAlphaIndex.hide,
       color: new Color3(0.48, 0.52, 0.62),
       label: "Hide",
       labelFont: "bold 22px monospace",
@@ -221,7 +259,8 @@ export class CafeSceneLayout {
       width: 110,
       height: 90,
       layer: LayoutLayer.ui,
-      depthOffset: 0.06,
+      depthOffset: LayoutZOffset.boss,
+      alphaIndex: LayoutAlphaIndex.boss,
       color: new Color3(0.7, 0.62, 0.32),
       label: "BOSS",
       labelFont: "bold 24px monospace",

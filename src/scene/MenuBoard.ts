@@ -6,7 +6,7 @@ import { DRINK_MENU, getDrinkBySlot, type Drink } from "../game/Drink.ts";
 import { debugLog } from "../utils/debugLog.ts";
 import { Vec2 } from "../utils/math.ts";
 
-import { LayoutLayer } from "./LayoutLayer.ts";
+import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 /** Bottom-left on counter — above clip edge (design bottom = -360). */
@@ -41,7 +41,8 @@ export class MenuBoard {
         width: BOARD_W,
         height: BOARD_H,
         layer: LayoutLayer.ui,
-        depthOffset: 0,
+        depthOffset: LayoutZOffset.menuBoard,
+        alphaIndex: LayoutAlphaIndex.menuBoard,
         color: new Color3(0.55, 0.48, 0.36),
       }),
     );
@@ -53,7 +54,8 @@ export class MenuBoard {
         width: BOARD_W,
         height: 32,
         layer: LayoutLayer.ui,
-        depthOffset: 0.01,
+        depthOffset: LayoutZOffset.menuTitle,
+        alphaIndex: LayoutAlphaIndex.menuTitle,
         color: new Color3(0.48, 0.42, 0.32),
         label: "Menu",
         labelFont: "bold 24px monospace",
@@ -86,7 +88,8 @@ export class MenuBoard {
       width: SLOT_W,
       height: SLOT_H,
       layer: LayoutLayer.ui,
-      depthOffset: 0.02 + drink.slot * 0.01,
+      depthOffset: LayoutZOffset.menuSlot(drink.slot),
+      alphaIndex: LayoutAlphaIndex.menuSlot(drink.slot),
       color: drink.menuColor,
       label: `${drink.slot}  ${drink.shortLabel}`,
       labelFont: "bold 17px monospace",

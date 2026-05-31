@@ -5,6 +5,8 @@ const server = Bun.serve({
     "/": index,
     "/assets/image-bg.png": () =>
       new Response(Bun.file("./assets/image-bg.png")),
+    "/assets/image-counter-top.png": () =>
+      new Response(Bun.file("./assets/image-counter-top.png")),
   },
   development: {
     hmr: true,
