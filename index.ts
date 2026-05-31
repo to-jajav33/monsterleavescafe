@@ -53,6 +53,12 @@ const server = Bun.serve({
       new Response(Bun.file("./assets/image-boss-cutie-running-1.png")),
     "/assets/image-gameover-youre-fired.png": () =>
       new Response(Bun.file("./assets/image-gameover-youre-fired.png")),
+    "/assets/image-boss-tutorial.png": () =>
+      new Response(Bun.file("./assets/image-boss-tutorial.png")),
+    "/assets/image-button-next.png": () =>
+      new Response(Bun.file("./assets/image-button-next.png")),
+    "/assets/image-button-start-shift.png": () =>
+      new Response(Bun.file("./assets/image-button-start-shift.png")),
   },
   development: {
     hmr: true,

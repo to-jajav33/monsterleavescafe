@@ -84,4 +84,5 @@ export const LayoutAlphaIndex = {
   /** Angry boss loop on game-over (above defeat text). */
   bossGameOver: 155,
   titleMenuButton: 120,
+  tutorialUi: 118,
 } as const;

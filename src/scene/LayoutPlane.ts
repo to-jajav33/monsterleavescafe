@@ -5,6 +5,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Material } from "@babylonjs/core/Materials/material";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import type { ICanvasRenderingContext } from "@babylonjs/core/Engines/ICanvas";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 
@@ -39,6 +40,8 @@ export type LayoutPlaneConfig = {
   label?: string;
   labelFont?: string;
   labelTextColor?: string;
+  /** Inset for wrapped label text (enables word wrap + top-left alignment). */
+  labelPadding?: number;
   /** Default false — only enable on interactive meshes (menu slots, buttons). */
   pickable?: boolean;
   /**
@@ -53,6 +56,39 @@ function colorToHex(color: Color3): string {
   const g = Math.round(color.g * 255);
   const b = Math.round(color.b * 255);
   return `rgb(${r},${g},${b})`;
+}
+
+function parseFontSizePx(font: string): number {
+  const match = /(\d+(?:\.\d+)?)\s*px/i.exec(font);
+  return match ? Number.parseFloat(match[1]!) : 20;
+}
+
+function wrapLabelLines(
+  ctx: Pick<ICanvasRenderingContext, "measureText" | "font">,
+  text: string,
+  maxWidth: number,
+): string[] {
+  const lines: string[] = [];
+  for (const paragraph of text.split("\n")) {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      continue;
+    }
+    let current = "";
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (current && ctx.measureText(candidate).width > maxWidth) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = candidate;
+      }
+    }
+    if (current) {
+      lines.push(current);
+    }
+  }
+  return lines;
 }
 
 function planeWorldBounds(
@@ -147,18 +183,7 @@ export class LayoutPlane {
       return;
     }
     this.config.label = text;
-    const font =
-      this.config.labelFont ?? `bold ${Math.floor(this.config.height * 0.32)}px monospace`;
-    const textColor = this.config.labelTextColor ?? "#f8f8f2";
-    this.labelTexture.drawText(
-      text,
-      null,
-      null,
-      font,
-      textColor,
-      colorToHex(this.config.color),
-      true,
-    );
+    this.redrawLabel();
   }
 
   dispose(): void {
@@ -266,18 +291,50 @@ export class LayoutPlane {
       false,
     );
     this.labelTexture = tex;
-    const font =
-      this.config.labelFont ?? `bold ${Math.floor(h * 0.32)}px monospace`;
-    const textColor = this.config.labelTextColor ?? "#f8f8f2";
-    tex.drawText(
-      this.config.label ?? "",
-      null,
-      null,
-      font,
-      textColor,
-      colorToHex(this.config.color),
-      true,
-    );
+    this.redrawLabel();
     return tex;
+  }
+
+  private redrawLabel(): void {
+    const tex = this.labelTexture;
+    if (!tex) {
+      return;
+    }
+    const font =
+      this.config.labelFont ??
+      `bold ${Math.floor(this.config.height * 0.32)}px monospace`;
+    const textColor = this.config.labelTextColor ?? "#f8f8f2";
+    const fill = colorToHex(this.config.color);
+    const text = this.config.label ?? "";
+
+    if (this.config.labelPadding === undefined) {
+      tex.drawText(text, null, null, font, textColor, fill, true);
+      return;
+    }
+
+    const size = tex.getSize();
+    const padding = this.config.labelPadding;
+    const ctx = tex.getContext();
+    ctx.clearRect(0, 0, size.width, size.height);
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, size.width, size.height);
+    ctx.font = font;
+    ctx.fillStyle = textColor;
+
+    const maxWidth = size.width - padding * 2;
+    const lines = wrapLabelLines(ctx, text, maxWidth);
+    const fontSize = parseFontSizePx(font);
+    const lineHeight = Math.ceil(fontSize * 1.32);
+    const textTop = padding + Math.ceil(fontSize * 0.15);
+    let y = textTop;
+    const maxY = size.height - padding;
+    for (const line of lines) {
+      if (y + lineHeight > maxY) {
+        break;
+      }
+      ctx.fillText(line, padding, y + fontSize);
+      y += lineHeight;
+    }
+    tex.update();
   }
 }
