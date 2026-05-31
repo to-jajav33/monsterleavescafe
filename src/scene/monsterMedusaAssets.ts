@@ -5,6 +5,9 @@ import { bubbleCenterBesideMonster } from "./orderBubbleLayout.ts";
 
 export const MEDUSA_IDLE_URL = "/assets/image-monster-medusa-idle-1.png";
 
+/** Glowing eyes during Medusa hide reveal (same sheet size as idle). */
+export const MEDUSA_EYES_GLOW_URL = "/assets/image-monster-medusa-stone-1.png";
+
 export const MEDUSA_IDLE_NATIVE = {
   width: 1320,
   height: 743,
@@ -12,9 +15,11 @@ export const MEDUSA_IDLE_NATIVE = {
 
 export const MEDUSA_IDLE_FRAMES = {
   idle: MEDUSA_IDLE_URL,
+  eyesGlow: MEDUSA_EYES_GLOW_URL,
   angry1: "/assets/image-monster-medusa-angry-1.png",
   jumpScare: "/assets/image-monster-medusa-jumpscare-2.png",
-  stone: "/assets/image-monster-medusa-stone-1.png",
+  /** Failed hide — petrified (reuses glow sheet until dedicated stoned art exists). */
+  stone: MEDUSA_EYES_GLOW_URL,
 } as const;
 
 export const MEDUSA_BUBBLE_ANCHOR_WIDTH = 320;

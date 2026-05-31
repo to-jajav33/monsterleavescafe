@@ -336,14 +336,14 @@ export class SeatCustomer {
     return this.appearance === "medusa_idle";
   }
 
-  /** Swap Medusa body art during hide event (eyes frame is placeholder until glow asset). */
+  /** Swap Medusa body art during hide event (idle / eyes glow / stoned). */
   setMedusaBodyFrame(frame: "idle" | "eyes" | "stone"): void {
     if (!this.isMedusaCustomer || !this.monsterBodyPlane) {
       return;
     }
     const url =
       frame === "eyes"
-        ? MEDUSA_IDLE_FRAMES.angry1
+        ? MEDUSA_IDLE_FRAMES.eyesGlow
         : frame === "stone"
           ? MEDUSA_IDLE_FRAMES.stone
           : MEDUSA_IDLE_FRAMES.idle;

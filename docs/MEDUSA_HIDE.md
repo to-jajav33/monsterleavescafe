@@ -17,7 +17,7 @@ Authoritative design for the Medusa hide event. Implementation is phased; see [G
 |------|--------|----------------|
 | 1 | **Telegraph** | Hide button **pulses**. Medusa stays **idle** (no red eyes). |
 | 2 | **Early hide (optional)** | Player **press and holds** Hide or Space → **valid** (will not be stoned). |
-| 3 | **Reveal** | Medusa **eyes glow red** (dedicated frame; placeholder: angry frame until art exists). |
+| 3 | **Reveal** | Medusa **eyes glow** (`/assets/image-monster-medusa-stone-1.png`). |
 | 4 | **Danger window** | **0.5s** to be in hide state (already hiding from step 2 counts). **Serve (1/2/3) and Boss disabled** for this window only. |
 | 5 | **Fail** | After 0.5s, if **not** hiding → **stoned game over** (Lose 3, not a strike). Medusa must **not** enter rage/stoned-from-rage during this event. |
 | 6 | **While hiding** | Camera pans **down** (Y only, **0.25s**) until frame bottom meets **counter bottom**. **All counter patience paused**. **Shift timer keeps running**. |
@@ -56,7 +56,7 @@ Authoritative design for the Medusa hide event. Implementation is phased; see [G
 3. **Patience pause** — done (`RageSystem` + `isPatiencePausedForHide`).
 4. **Danger gating** — done (menu serve blocked during danger window; Boss not wired yet).
 5. **Hide button pulse** — done (`HideButtonPulse`).
-6. **Medusa eyes art** — replace placeholder angry frame with glow asset.
+6. **Medusa eyes art** — done (`eyesGlow` → `image-monster-medusa-stone-1.png`).
 7. **Camera pan** — done (`HideCameraPan`: 0.25s Y pan to counter bottom while holding hide).
 8. **Stoned overlay** — partial (`showStoned()` copy); dedicated art optional.
 
