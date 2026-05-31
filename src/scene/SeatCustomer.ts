@@ -50,11 +50,12 @@ import {
 } from "./monsterSlimeAssets.ts";
 import { bubbleCenterBesideMonster } from "./orderBubbleLayout.ts";
 import {
+  dismissJumpScarePresentation,
   monsterRageFrames,
   playMonsterRageOut,
-  restoreMonsterIdle,
   type RageOutPlayback,
 } from "./monsterRageAnimation.ts";
+import { MonsterJumpScareOverlay } from "./MonsterJumpScareOverlay.ts";
 import { OrderBubble, type OrderBubbleStyle } from "./OrderBubble.ts";
 import { RageBubble } from "./RageBubble.ts";
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
@@ -175,6 +176,7 @@ export class SeatCustomer {
   private readonly appearance: CustomerAppearance;
   private readonly planes: LayoutPlane[] = [];
   private monsterBodyPlane: LayoutPlane | null = null;
+  private jumpScareOverlay: MonsterJumpScareOverlay | null = null;
   private orderBubble: OrderBubble | null = null;
   private rageBubble: RageBubble | null = null;
   private _seatIndex: number;
@@ -262,6 +264,12 @@ export class SeatCustomer {
       });
       this.monsterBodyPlane = bodyPlane;
       this.planes.push(bodyPlane);
+      this.jumpScareOverlay = new MonsterJumpScareOverlay(scene, {
+        seatIndex: this._seatIndex,
+        meshPrefix: art.meshPrefix,
+        native: art.native,
+        tint: art.tint,
+      });
       logMonsterBottomAlignment(
         checkMonsterBottomAlignment(
           this.planes[this.planes.length - 1]!.mesh,
@@ -340,7 +348,7 @@ export class SeatCustomer {
     return this._rageInAngerWindow;
   }
 
-  /** True after angry phase until idle restore (jumpscare held). */
+  /** True while center-screen jumpscare overlay is shown. */
   get isOnRageJumpscare(): boolean {
     return this._rageOnJumpscare;
   }
@@ -377,7 +385,8 @@ export class SeatCustomer {
 
     const frames = monsterRageFrames(this.appearance);
     const body = this.monsterBodyPlane;
-    if (!frames || !body) {
+    const overlay = this.jumpScareOverlay;
+    if (!frames || !body || !overlay) {
       this._rageInAngerWindow = false;
       debugLog("SeatCustomer.beginRageAnger: no art body", {
         appearance: this.appearance,
@@ -386,7 +395,7 @@ export class SeatCustomer {
     }
 
     this.ragePlayback?.cancel();
-    this.ragePlayback = playMonsterRageOut(body, frames, {
+    this.ragePlayback = playMonsterRageOut(body, frames, overlay, {
       onAngerComplete: () => {
         this._rageInAngerWindow = false;
         this._rageOnJumpscare = true;
@@ -416,8 +425,10 @@ export class SeatCustomer {
     this.ragePlayback?.cancel();
     this.ragePlayback = null;
     const frames = monsterRageFrames(this.appearance);
-    if (frames && this.monsterBodyPlane) {
-      restoreMonsterIdle(this.monsterBodyPlane, frames);
+    const body = this.monsterBodyPlane;
+    const overlay = this.jumpScareOverlay;
+    if (frames && body && overlay) {
+      dismissJumpScarePresentation(body, overlay, frames);
     }
   }
 
@@ -540,6 +551,8 @@ export class SeatCustomer {
   dispose(): void {
     this.stopRageAnimation();
     killMeshTweens(this.getAnimMeshes());
+    this.jumpScareOverlay?.dispose();
+    this.jumpScareOverlay = null;
     this.monsterBodyPlane = null;
     this.rageBubble?.dispose();
     this.rageBubble = null;

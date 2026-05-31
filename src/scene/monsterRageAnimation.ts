@@ -2,6 +2,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import gsap from "gsap";
 
 import { killMeshTweens } from "../utils/animateMeshes.ts";
+import type { MonsterJumpScareOverlay } from "./MonsterJumpScareOverlay.ts";
 import type { LayoutPlane } from "./LayoutPlane.ts";
 import {
   BIGFOOT_IDLE_FRAMES,
@@ -99,11 +100,12 @@ export type RageOutPlayback = {
 };
 
 /**
- * 1.0s angry flip (angry1 ↔ angry2) with body shake, then hold jumpscare until idle restore.
+ * 1.0s angry flip on seat body + shake, then center-screen jumpscare overlay (UI layer).
  */
 export function playMonsterRageOut(
   body: LayoutPlane,
   frames: MonsterRageFrameSet,
+  jumpScareOverlay: MonsterJumpScareOverlay,
   hooks?: { onAngerComplete?: () => void },
 ): RageOutPlayback {
   const angryUrls = frames.angry;
@@ -114,9 +116,14 @@ export function playMonsterRageOut(
 
   const endAnger = (): void => {
     stopShake();
-    body.setImageUrl(frames.jumpScare);
+    restoreMonsterIdle(body, frames);
+    body.mesh.isVisible = false;
+    jumpScareOverlay.show(frames.jumpScare);
     hooks?.onAngerComplete?.();
-    debugLog("MonsterRageAnimation: jumpscare", { jumpScare: frames.jumpScare });
+    debugLog("MonsterRageAnimation: jumpscare overlay", {
+      jumpScare: frames.jumpScare,
+      center: { x: 0, y: 0 },
+    });
   };
 
   const clearFlipTimer = (): void => {
@@ -153,10 +160,22 @@ export function playMonsterRageOut(
       cancelled = true;
       clearFlipTimer();
       stopShake();
+      dismissJumpScarePresentation(body, jumpScareOverlay, frames);
     },
   };
 }
 
 export function restoreMonsterIdle(body: LayoutPlane, frames: MonsterRageFrameSet): void {
   body.setImageUrl(frames.idle);
+}
+
+/** Hide center overlay and show idle body at the seat again. */
+export function dismissJumpScarePresentation(
+  body: LayoutPlane,
+  jumpScareOverlay: MonsterJumpScareOverlay,
+  frames: MonsterRageFrameSet,
+): void {
+  jumpScareOverlay.hide();
+  body.mesh.isVisible = true;
+  restoreMonsterIdle(body, frames);
 }

@@ -42,6 +42,8 @@ export const LayoutZOffset = {
   hide: 0.05,
   boss: 0.06,
   shiftTimer: 0.04,
+  /** Center-screen jumpscare — above counter, below shift-end overlay. */
+  jumpScare: 0.08,
 } as const;
 
 /** Transparent-pass sort: higher draws on top within the same rendering group. */
@@ -67,6 +69,8 @@ export const LayoutAlphaIndex = {
   hide: 110,
   boss: 111,
   shiftTimer: 112,
+  /** Rage jumpscare — UI group, over counter (group 2). */
+  jumpScare: 125,
   shiftEndOverlay: 130,
   titleMenuButton: 120,
 } as const;
