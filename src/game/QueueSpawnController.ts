@@ -66,7 +66,13 @@ export class QueueSpawnController {
   }
 
   private async tick(): Promise<void> {
-    if (this.stopped || this.shouldStop()) {
+    if (this.stopped) {
+      return;
+    }
+
+    // Keep the timer alive while line advance / other brief pauses run.
+    if (this.shouldStop()) {
+      this.scheduleNext();
       return;
     }
 
@@ -88,10 +94,22 @@ export class QueueSpawnController {
       this.onQueueUpdated();
     } finally {
       this.busy = false;
-      if (!this.stopped && !this.shouldStop()) {
+      if (!this.stopped) {
         this.scheduleNext();
       }
     }
+  }
+
+  /** Try to fill an open seat soon after one opens (e.g. post serve / rage exit). */
+  wake(): void {
+    if (this.stopped) {
+      return;
+    }
+    if (this.timeoutId !== null) {
+      globalThis.clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+    void this.tick();
   }
 
   private async spawnInto(

@@ -51,6 +51,7 @@ export class GameplayController {
       customers,
       () => {
         this.applyOrderBubbleStyles();
+        this.queueSpawn.wake();
       },
     );
     this.queueSpawn = new QueueSpawnController(
