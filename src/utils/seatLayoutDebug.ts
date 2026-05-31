@@ -251,6 +251,7 @@ export function logSeatLayoutMeshes(
 
   const groups: { tag: string; re: RegExp }[] = [
     { tag: "slime", re: /^monster_slime/ },
+    { tag: "medusa", re: /^monster_medusa/ },
     { tag: "placeholder", re: /^monster_body/ },
     { tag: "seat_marker", re: /^seat_\d/ },
     { tag: "order_bubble", re: /^order_bubble/ },

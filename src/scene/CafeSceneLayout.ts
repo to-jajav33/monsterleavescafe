@@ -240,8 +240,8 @@ export class CafeSceneLayout {
 
   private buildSeats(): void {
     for (let i = 0; i < 3; i++) {
-      // Seat L uses full-size slime art; skip pad label (sprite covers marker).
-      if (i === 0) {
+      // Full-size monster art covers L/C pads.
+      if (i === 0 || i === 1) {
         continue;
       }
       const role = i === ACTIVE_SEAT_INDEX ? "active" : "queue";

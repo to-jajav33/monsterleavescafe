@@ -3,7 +3,11 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 import { CustomerRage } from "../game/CustomerRage.ts";
 import { getDrinkBySlot } from "../game/Drink.ts";
-import { PlaceholderMonster, SlimeMonster } from "../entities/Monster.ts";
+import {
+  MedusaMonster,
+  PlaceholderMonster,
+  SlimeMonster,
+} from "../entities/Monster.ts";
 import { debugLog } from "../utils/debugLog.ts";
 import { horizSpan } from "../utils/seatLayoutDebug.ts";
 import {
@@ -14,6 +18,12 @@ import {
 import { Vec2 } from "../utils/math.ts";
 
 import { SEAT_X, type SeatRole } from "./CounterSeat.ts";
+import {
+  MEDUSA_IDLE_NATIVE,
+  MEDUSA_IDLE_URL,
+  medusaOrderBubbleCenter,
+  medusaSpriteCenterAtSeat,
+} from "./monsterMedusaAssets.ts";
 import {
   SLIME_DROP_TOWARD_COUNTER,
   SLIME_FEET_ABOVE_COUNTER,
@@ -30,14 +40,13 @@ import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 const PLACEHOLDER_MONSTER_CENTER_Y = 5;
-/** Bubble height — counter / speech level (not placeholder body Y). */
 const PLACEHOLDER_BUBBLE_ANCHOR_Y = 100;
 const PLACEHOLDER_WIDTH = 72;
 const PLACEHOLDER_HEIGHT = 85;
 const EXIT_X = 720;
 const ORDER_DEPTH = LayoutZOffset.orderBubble;
 
-export type CustomerAppearance = "placeholder" | "slime_idle";
+export type CustomerAppearance = "placeholder" | "slime_idle" | "medusa_idle";
 
 export type SeatCustomerConfig = {
   seatIndex: number;
@@ -46,11 +55,54 @@ export type SeatCustomerConfig = {
   appearance?: CustomerAppearance;
 };
 
+type ArtMonsterConfig = {
+  native: { width: number; height: number };
+  idleUrl: string;
+  meshPrefix: string;
+  tint: Color3;
+  spriteCenterAtSeat: (seatX: number) => Vec2;
+  orderBubbleCenter: (seatX: number) => Vec2;
+};
+
+const ART_MONSTERS: Record<
+  "slime_idle" | "medusa_idle",
+  ArtMonsterConfig
+> = {
+  slime_idle: {
+    native: SLIME_IDLE_NATIVE,
+    idleUrl: SLIME_IDLE_URL,
+    meshPrefix: "monster_slime_idle",
+    tint: new Color3(0.45, 0.72, 0.42),
+    spriteCenterAtSeat: slimeSpriteCenterAtSeat,
+    orderBubbleCenter: slimeOrderBubbleCenter,
+  },
+  medusa_idle: {
+    native: MEDUSA_IDLE_NATIVE,
+    idleUrl: MEDUSA_IDLE_URL,
+    meshPrefix: "monster_medusa_idle",
+    tint: new Color3(0.52, 0.68, 0.48),
+    spriteCenterAtSeat: medusaSpriteCenterAtSeat,
+    orderBubbleCenter: medusaOrderBubbleCenter,
+  },
+};
+
+function defaultAppearance(seatIndex: number): CustomerAppearance {
+  if (seatIndex === 0) return "slime_idle";
+  if (seatIndex === 1) return "medusa_idle";
+  return "placeholder";
+}
+
+function isArtMonster(
+  appearance: CustomerAppearance,
+): appearance is "slime_idle" | "medusa_idle" {
+  return appearance === "slime_idle" || appearance === "medusa_idle";
+}
+
 /**
- * Customer at a counter seat — placeholder or slime sprite + order/rage bubbles.
+ * Customer at a counter seat — art sprite or placeholder + order/rage bubbles.
  */
 export class SeatCustomer {
-  readonly monster: PlaceholderMonster | SlimeMonster;
+  readonly monster: PlaceholderMonster | SlimeMonster | MedusaMonster;
   readonly rage: CustomerRage;
   readonly isOccupied = true;
 
@@ -63,20 +115,22 @@ export class SeatCustomer {
   private _role: SeatRole;
   private _drinkSlot: 1 | 2 | 3;
   private _rageAngerStarted = false;
+
   constructor(scene: Scene, config: SeatCustomerConfig) {
     this.scene = scene;
     this._seatIndex = config.seatIndex;
     this._drinkSlot = config.drinkSlot;
     this._role = config.role;
     this.appearance =
-      config.appearance ??
-      (config.seatIndex === 0 ? "slime_idle" : "placeholder");
+      config.appearance ?? defaultAppearance(config.seatIndex);
 
     const seatX = SEAT_X[this._seatIndex]!;
     const drink = getDrinkBySlot(this._drinkSlot);
 
     if (this.appearance === "slime_idle") {
       this.monster = new SlimeMonster(28);
+    } else if (this.appearance === "medusa_idle") {
+      this.monster = new MedusaMonster(28);
     } else {
       this.monster = new PlaceholderMonster(this.isActive ? 22 : 28);
     }
@@ -86,10 +140,9 @@ export class SeatCustomer {
 
     this.rage = new CustomerRage(this.monster.patienceSeconds);
 
-    const horizontalSpan =
-      this.appearance === "slime_idle"
-        ? horizSpan(seatX, SLIME_IDLE_NATIVE.width)
-        : horizSpan(seatX, PLACEHOLDER_WIDTH);
+    const art = isArtMonster(this.appearance)
+      ? ART_MONSTERS[this.appearance]
+      : null;
 
     debugLog("SeatCustomer.create", {
       seat: this._seatIndex,
@@ -104,34 +157,36 @@ export class SeatCustomer {
         x: orderBubbleCenter.x,
         y: orderBubbleCenter.y,
       },
-      horizontalSpan,
-      planeSize:
-        this.appearance === "slime_idle"
-          ? SLIME_IDLE_NATIVE
-          : { width: PLACEHOLDER_WIDTH, height: PLACEHOLDER_HEIGHT },
-      ...(this.appearance === "slime_idle"
+      horizontalSpan: art
+        ? horizSpan(seatX, art.native.width)
+        : horizSpan(seatX, PLACEHOLDER_WIDTH),
+      planeSize: art?.native ?? {
+        width: PLACEHOLDER_WIDTH,
+        height: PLACEHOLDER_HEIGHT,
+      },
+      ...(art
         ? {
             feetY:
               COUNTER_TOP_EDGE_Y +
               SLIME_FEET_ABOVE_COUNTER -
               SLIME_DROP_TOWARD_COUNTER,
-            spriteTop: monsterCenter.y + SLIME_IDLE_NATIVE.height / 2,
+            spriteTop: monsterCenter.y + art.native.height / 2,
           }
         : {}),
     });
 
-    if (this.appearance === "slime_idle") {
+    if (art) {
       this.planes.push(
         new LayoutPlane(scene, {
-          name: `monster_slime_idle_${this._seatIndex}`,
+          name: `${art.meshPrefix}_${this._seatIndex}`,
           center: monsterCenter,
-          width: SLIME_IDLE_NATIVE.width,
-          height: SLIME_IDLE_NATIVE.height,
+          width: art.native.width,
+          height: art.native.height,
           layer: LayoutLayer.seats,
           depthOffset: LayoutZOffset.monsterBody,
           alphaIndex: LayoutAlphaIndex.monsterBody,
-          color: new Color3(0.45, 0.72, 0.42),
-          imageUrl: SLIME_IDLE_URL,
+          color: art.tint,
+          imageUrl: art.idleUrl,
           imageBlend: "alphablend",
         }),
       );
@@ -239,11 +294,11 @@ export class SeatCustomer {
     bubble: Vec2;
   } {
     const x = SEAT_X[seatIndex]!;
-    if (this.appearance === "slime_idle") {
-      const monster = slimeSpriteCenterAtSeat(x);
+    if (isArtMonster(this.appearance)) {
+      const art = ART_MONSTERS[this.appearance];
       return {
-        monster,
-        bubble: slimeOrderBubbleCenter(x),
+        monster: art.spriteCenterAtSeat(x),
+        bubble: art.orderBubbleCenter(x),
       };
     }
     const monster = new Vec2(x, PLACEHOLDER_MONSTER_CENTER_Y);
@@ -350,7 +405,7 @@ export class SeatCustomer {
 /** Static demo orders for initial counter (L / C / R). */
 export const PHASE1_DEMO_CUSTOMERS: readonly SeatCustomerConfig[] = [
   { seatIndex: 0, drinkSlot: 1, role: "queue", appearance: "slime_idle" },
-  { seatIndex: 1, drinkSlot: 2, role: "queue", appearance: "placeholder" },
+  { seatIndex: 1, drinkSlot: 2, role: "queue", appearance: "medusa_idle" },
   { seatIndex: 2, drinkSlot: 3, role: "active", appearance: "placeholder" },
 ] as const;
 

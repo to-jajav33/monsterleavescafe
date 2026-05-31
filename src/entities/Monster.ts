@@ -16,3 +16,10 @@ export class SlimeMonster extends Monster {
     super(patienceSeconds);
   }
 }
+
+/** Medusa customer — queue at center seat. */
+export class MedusaMonster extends Monster {
+  constructor(patienceSeconds: number = 28) {
+    super(patienceSeconds);
+  }
+}

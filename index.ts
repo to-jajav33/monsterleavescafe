@@ -13,6 +13,14 @@ const server = Bun.serve({
       new Response(Bun.file("./assets/image-flashlight.png")),
     "/assets/image-monster-slime-idle-1.png": () =>
       new Response(Bun.file("./assets/image-monster-slime-idle-1.png")),
+    "/assets/image-monster-medusa-idle-1.png": () =>
+      new Response(Bun.file("./assets/image-monster-medusa-idle-1.png")),
+    "/assets/image-monster-medusa-angry-1.png": () =>
+      new Response(Bun.file("./assets/image-monster-medusa-angry-1.png")),
+    "/assets/image-monster-medusa-angry-2.png": () =>
+      new Response(Bun.file("./assets/image-monster-medusa-angry-2.png")),
+    "/assets/image-monster-medusa-stone-1.png": () =>
+      new Response(Bun.file("./assets/image-monster-medusa-stone-1.png")),
   },
   development: {
     hmr: true,
