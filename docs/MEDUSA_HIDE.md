@@ -57,8 +57,8 @@ Authoritative design for the Medusa hide event. Implementation is phased; see [G
 4. **Danger gating** — done (menu serve blocked during danger window; Boss not wired yet).
 5. **Hide button pulse** — done (`HideButtonPulse`).
 6. **Medusa eyes art** — replace placeholder angry frame with glow asset.
-7. **Camera pan** — 0.25s vertical on hide/release.
-8. **Stoned overlay** — dedicated copy / art; wire `showStoned()`.
+7. **Camera pan** — done (`HideCameraPan`: 0.25s Y pan to counter bottom while holding hide).
+8. **Stoned overlay** — partial (`showStoned()` copy); dedicated art optional.
 
 ## Open follow-up
 

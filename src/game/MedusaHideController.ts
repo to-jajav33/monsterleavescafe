@@ -96,7 +96,11 @@ export class MedusaHideController {
     return this.subject;
   }
 
-  /** Slice 2 — wired from Space / Hide hold. */
+  get isPlayerHiding(): boolean {
+    return this.playerHiding;
+  }
+
+  /** Wired from Space / Hide hold. */
   setPlayerHiding(hiding: boolean): void {
     if (this.playerHiding === hiding) {
       return;

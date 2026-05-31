@@ -14,6 +14,9 @@ export const MEDUSA_HIDE_DANGER_SEC = 0.5;
 /** After a successful hide, eyes stay red briefly before idle (step 7). */
 export const MEDUSA_HIDE_EYES_COOLDOWN_SEC = 0.6;
 
+/** Vertical camera pan when ducking / standing back up. */
+export const MEDUSA_HIDE_CAMERA_PAN_SEC = 0.25;
+
 export function randomMedusaHideArmDelaySec(): number {
   const span = MEDUSA_HIDE_ARM_DELAY_MAX_SEC - MEDUSA_HIDE_ARM_DELAY_MIN_SEC;
   return MEDUSA_HIDE_ARM_DELAY_MIN_SEC + Math.random() * span;

@@ -22,6 +22,11 @@ import { RageSystem } from "./RageSystem.ts";
 import { ServeResolver } from "./ServeResolver.ts";
 import { ShiftTimer } from "./ShiftTimer.ts";
 
+export type GameplayControllerOptions = {
+  /** Reset hide camera when the run ends (stoned, strikes, shift over). */
+  onRunLost?: () => void;
+};
+
 /** Phase 2+ gameplay systems (queue, serve targeting, menu input). */
 export class GameplayController {
   private readonly queue: CounterQueue;
@@ -47,6 +52,7 @@ export class GameplayController {
     shiftEndOverlay: ShiftEndOverlay,
     livesHud: LivesHud,
     hideButtonMesh: Mesh | null = null,
+    private readonly controllerOptions: GameplayControllerOptions = {},
   ) {
     this.shiftEndOverlay = shiftEndOverlay;
     this.queue = new CounterQueue(customers);
@@ -121,6 +127,10 @@ export class GameplayController {
     return this.medusaHide.isHideButtonPulsing;
   }
 
+  get isPlayerHiding(): boolean {
+    return this.medusaHide.isPlayerHiding;
+  }
+
   private get canServe(): boolean {
     return this.canPlay && !this.medusaHide.isDangerWindow;
   }
@@ -147,6 +157,7 @@ export class GameplayController {
     this.runLost = true;
     this.shiftTimer.pause();
     this.queueSpawn.stop();
+    this.controllerOptions.onRunLost?.();
     showOverlay();
     debugLog("GameplayController: game over — timer paused");
   }

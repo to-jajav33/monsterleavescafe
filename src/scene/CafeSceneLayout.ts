@@ -30,6 +30,7 @@ import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { CounterFlashlightDecal } from "./CounterFlashlightDecal.ts";
 import { HideButtonPulse } from "./HideButtonPulse.ts";
+import { HideCameraPan } from "./HideCameraPan.ts";
 import { GhostNpcDecor } from "./GhostNpcDecor.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
 import { LivesHud } from "./LivesHud.ts";
@@ -66,6 +67,7 @@ export class CafeSceneLayout {
   private livesHud: LivesHud | null = null;
   private shiftEndOverlay: ShiftEndOverlay | null = null;
   private hideButtonPulse: HideButtonPulse | null = null;
+  private hideCameraPan: HideCameraPan | null = null;
   private shiftEndPointerObserver: Observer<PointerInfo> | null = null;
   private readonly updateOrtho: () => void;
 
@@ -107,6 +109,8 @@ export class CafeSceneLayout {
     this.livesHud = null;
     this.hideButtonPulse?.dispose();
     this.hideButtonPulse = null;
+    this.hideCameraPan?.dispose();
+    this.hideCameraPan = null;
     this.gameplay?.dispose();
     this.gameplay = null;
     this.ghostNpc?.dispose();
@@ -184,8 +188,12 @@ export class CafeSceneLayout {
       this.shiftEndOverlay,
       this.livesHud,
       hideButtonMesh,
+      {
+        onRunLost: () => this.hideCameraPan?.snapToOrigin(),
+      },
     );
     this.wireHideButtonPulse();
+    this.wireHideCameraPan();
     this.buildBossBell();
   }
 
@@ -334,6 +342,16 @@ export class CafeSceneLayout {
       pickable: true,
       sortTransparent: true,
     });
+  }
+
+  private wireHideCameraPan(): void {
+    if (!this.gameplay) {
+      return;
+    }
+    this.hideCameraPan = new HideCameraPan(this.scene, this.camera, () =>
+      this.gameplay!.isPlayerHiding,
+    );
+    debugLog("CafeSceneLayout: hide camera pan wired");
   }
 
   private wireHideButtonPulse(): void {
