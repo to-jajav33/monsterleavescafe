@@ -41,6 +41,11 @@ export type LayoutPlaneConfig = {
   labelTextColor?: string;
   /** Default false — only enable on interactive meshes (menu slots, buttons). */
   pickable?: boolean;
+  /**
+   * Force alphablend so label planes sort with monsters via alphaIndex
+   * (opaque labels otherwise draw before transparent PNGs).
+   */
+  sortTransparent?: boolean;
 };
 
 function colorToHex(color: Color3): string {
@@ -195,6 +200,10 @@ export class LayoutPlane {
       mat.emissiveTexture = tex;
       mat.diffuseColor = Color3.White();
       mat.emissiveColor = Color3.White();
+      if (this.config.sortTransparent) {
+        mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
+        mat.alpha = 1;
+      }
     } else {
       mat.diffuseColor = this.config.color;
       mat.emissiveColor = this.config.color;

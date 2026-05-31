@@ -19,9 +19,10 @@ import {
   SLIME_FEET_ABOVE_COUNTER,
   SLIME_IDLE_NATIVE,
   SLIME_IDLE_URL,
-  slimeOrderBubbleY,
+  slimeOrderBubbleCenter,
   slimeSpriteCenterAtSeat,
 } from "./monsterSlimeAssets.ts";
+import { bubbleCenterBesideMonster } from "./orderBubbleLayout.ts";
 import { COUNTER_TOP_EDGE_Y } from "./sceneAssets.ts";
 import { OrderBubble, type OrderBubbleStyle } from "./OrderBubble.ts";
 import { RageBubble } from "./RageBubble.ts";
@@ -29,11 +30,12 @@ import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 const PLACEHOLDER_MONSTER_CENTER_Y = 5;
-const PLACEHOLDER_BUBBLE_CENTER_Y = 100;
+/** Bubble height — counter / speech level (not placeholder body Y). */
+const PLACEHOLDER_BUBBLE_ANCHOR_Y = 100;
 const PLACEHOLDER_WIDTH = 72;
 const PLACEHOLDER_HEIGHT = 85;
 const EXIT_X = 720;
-const ORDER_DEPTH = 0.12;
+const ORDER_DEPTH = LayoutZOffset.orderBubble;
 
 export type CustomerAppearance = "placeholder" | "slime_idle";
 
@@ -164,7 +166,6 @@ export class SeatCustomer {
       scene,
       orderBubbleCenter,
       `${this._seatIndex}_${drink.slot}`,
-      ORDER_DEPTH,
     );
   }
 
@@ -242,12 +243,16 @@ export class SeatCustomer {
       const monster = slimeSpriteCenterAtSeat(x);
       return {
         monster,
-        bubble: new Vec2(x, slimeOrderBubbleY(monster)),
+        bubble: slimeOrderBubbleCenter(x),
       };
     }
+    const monster = new Vec2(x, PLACEHOLDER_MONSTER_CENTER_Y);
     return {
-      monster: new Vec2(x, PLACEHOLDER_MONSTER_CENTER_Y),
-      bubble: new Vec2(x, PLACEHOLDER_BUBBLE_CENTER_Y),
+      monster,
+      bubble: bubbleCenterBesideMonster(
+        new Vec2(x, PLACEHOLDER_BUBBLE_ANCHOR_Y),
+        PLACEHOLDER_WIDTH,
+      ),
     };
   }
 

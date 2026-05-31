@@ -1,5 +1,6 @@
 import { Vec2 } from "../utils/math.ts";
 
+import { bubbleCenterBesideMonster } from "./orderBubbleLayout.ts";
 import { COUNTER_TOP_EDGE_Y } from "./sceneAssets.ts";
 
 export const SLIME_IDLE_URL = "/assets/image-monster-slime-idle-1.png";
@@ -30,8 +31,14 @@ export const SLIME_IDLE_FRAMES = {
   jumpScare: "/assets/image-monster-slime-jump-scare-1.png",
 } as const;
 
-/** Order bubble sits below the top of the slime body. */
-export const SLIME_ORDER_BUBBLE_OFFSET_FROM_TOP = 72;
+/**
+ * How far right of seat center the slime body reads (not 1320px artboard).
+ * Used so order bubbles sit beside the visible blob, not off-screen right.
+ */
+export const SLIME_BUBBLE_ANCHOR_WIDTH = 300;
+
+/** Nudge bubble toward head from sprite vertical center. */
+export const SLIME_BUBBLE_Y_OFFSET = 80;
 
 /** Center for a bottom-anchored slime at a seat X. */
 export function slimeSpriteCenterAtSeat(seatX: number): Vec2 {
@@ -42,7 +49,12 @@ export function slimeSpriteCenterAtSeat(seatX: number): Vec2 {
   return new Vec2(seatX, bottom + SLIME_IDLE_NATIVE.height / 2);
 }
 
-export function slimeOrderBubbleY(spriteCenter: Vec2): number {
-  const top = spriteCenter.y + SLIME_IDLE_NATIVE.height / 2;
-  return top - SLIME_ORDER_BUBBLE_OFFSET_FROM_TOP;
+/** Order/rage bubble beside visible slime (anchored at seat X, not artboard right edge). */
+export function slimeOrderBubbleCenter(seatX: number): Vec2 {
+  const sprite = slimeSpriteCenterAtSeat(seatX);
+  return bubbleCenterBesideMonster(
+    new Vec2(seatX, sprite.y + SLIME_BUBBLE_Y_OFFSET),
+    SLIME_BUBBLE_ANCHOR_WIDTH,
+  );
 }
+

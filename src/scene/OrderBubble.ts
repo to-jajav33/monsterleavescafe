@@ -4,10 +4,17 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Drink } from "../game/Drink.ts";
 import { Vec2 } from "../utils/math.ts";
 
-import { LayoutAlphaIndex, LayoutLayer } from "./LayoutLayer.ts";
+import {
+  LayoutAlphaIndex,
+  LayoutLayer,
+  LayoutZOffset,
+} from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
-const BUBBLE_SIZE = 88;
+export const ORDER_BUBBLE_SIZE = 88;
+
+/** Gap between monster right edge and order bubble left edge (design units). */
+export const ORDER_BUBBLE_GAP_FROM_MONSTER = 16;
 
 export const BUBBLE_COLORS = {
   active: new Color3(1, 0.97, 0.82),
@@ -51,6 +58,7 @@ export class OrderBubble {
     this.drink = next;
     this.plane.dispose();
     this.plane = this.createPlane(this.style);
+    this.syncMeshPosition();
   }
 
   getMesh() {
@@ -64,8 +72,12 @@ export class OrderBubble {
   setCenter(x: number, y: number): void {
     this.center.x = x;
     this.center.y = y;
-    this.plane.mesh.position.x = x;
-    this.plane.mesh.position.y = y;
+    this.syncMeshPosition();
+  }
+
+  private syncMeshPosition(): void {
+    this.plane.mesh.position.x = this.center.x;
+    this.plane.mesh.position.y = this.center.y;
   }
 
   setStyle(next: OrderBubbleStyle): void {
@@ -76,6 +88,7 @@ export class OrderBubble {
     this.style = next;
     this.plane.dispose();
     this.plane = this.createPlane(next);
+    this.syncMeshPosition();
   }
 
   flashMatch(): void {
@@ -84,10 +97,12 @@ export class OrderBubble {
     }
     this.plane.dispose();
     this.plane = this.createPlane("match");
+    this.syncMeshPosition();
     this.flashTimer = setTimeout(() => {
       this.flashTimer = null;
       this.plane.dispose();
       this.plane = this.createPlane(this.style);
+      this.syncMeshPosition();
     }, 220);
   }
 
@@ -95,11 +110,12 @@ export class OrderBubble {
     return new LayoutPlane(this.scene, {
       name: `order_bubble_${this.nameSuffix}`,
       center: this.center,
-      width: BUBBLE_SIZE,
-      height: BUBBLE_SIZE,
+      width: ORDER_BUBBLE_SIZE,
+      height: ORDER_BUBBLE_SIZE,
       layer: LayoutLayer.seats,
       depthOffset: this.depthOffset,
-      alphaIndex: LayoutAlphaIndex.seatContent,
+      alphaIndex: LayoutAlphaIndex.orderBubble,
+      sortTransparent: true,
       color: BUBBLE_COLORS[style],
       label: `${this.drink.slot}\n${this.drink.shortLabel}`,
       labelFont: "bold 13px monospace",

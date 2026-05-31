@@ -5,7 +5,11 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 
 import { Vec2 } from "../utils/math.ts";
 
-import { LayoutAlphaIndex, LayoutLayer } from "./LayoutLayer.ts";
+import {
+  LayoutAlphaIndex,
+  LayoutLayer,
+  LayoutZOffset,
+} from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 const BUBBLE_SIZE = 88;
@@ -25,20 +29,16 @@ function randomRageLabel(): string {
 export class RageBubble {
   private readonly plane: LayoutPlane;
 
-  constructor(
-    scene: Scene,
-    center: Vec2,
-    nameSuffix: string,
-    depthOffset: number,
-  ) {
+  constructor(scene: Scene, center: Vec2, nameSuffix: string) {
     this.plane = new LayoutPlane(scene, {
       name: `rage_bubble_${nameSuffix}`,
       center,
       width: BUBBLE_SIZE,
       height: BUBBLE_SIZE,
       layer: LayoutLayer.seats,
-      depthOffset: depthOffset + 0.03,
-      alphaIndex: LayoutAlphaIndex.seatContent,
+      depthOffset: LayoutZOffset.rageBubble,
+      alphaIndex: LayoutAlphaIndex.rageBubble,
+      sortTransparent: true,
       color: new Color3(0.92, 0.22, 0.28),
       label: randomRageLabel(),
       labelFont: "bold 15px monospace",

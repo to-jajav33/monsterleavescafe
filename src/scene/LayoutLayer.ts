@@ -27,6 +27,9 @@ export const LayoutZOffset = {
   monsterBody: 0.07,
   /** On seats layer → z = 0.29 (above monsters, below order bubbles). */
   counterTop: 0.09,
+  /** Above monster body, below rage overlay. */
+  orderBubble: 0.11,
+  rageBubble: 0.14,
   /** Under-counter shelf decals (flashlight on hide shelf). */
   shelfDecal: 0.095,
   menuBoard: 0,
@@ -44,8 +47,11 @@ export const LayoutAlphaIndex = {
   monsterBody: 5,
   counterTop: 10,
   shelfDecal: 12,
-  /** Order / rage bubbles above counter. */
+  /** Legacy alias — prefer orderBubble / rageBubble. */
   seatContent: 20,
+  /** Draw stack: monsterBody < orderBubble < rageBubble (within group 2). */
+  orderBubble: 21,
+  rageBubble: 22,
   menuBoard: 100,
   menuTitle: 101,
   menuSlot: (slot: 1 | 2 | 3) => 102 + slot,
