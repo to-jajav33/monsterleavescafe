@@ -13,7 +13,7 @@ const EXIT_DURATION_SEC = 0.55;
 const SHIFT_DURATION_SEC = 0.45;
 
 /**
- * After a successful serve: active exits right, line shifts toward Exit, new monster at L.
+ * After serve or rage fail: exit right, shift L→C→R, spawn into rightmost open seat (R first).
  */
 export class LineAdvanceController {
   private busy = false;
@@ -72,18 +72,31 @@ export class LineAdvanceController {
 
     await Promise.all(moves);
 
+    const open = this.queue.findRightmostOpenSeat();
+    if (!open) {
+      this.busy = false;
+      this.onQueueUpdated();
+      debugLog("LineAdvance: no open seat — skip spawn");
+      return;
+    }
+
     const drinkSlot = this.nextSpawnDrink();
     const arrival = new SeatCustomer(this.scene, {
-      seatIndex: 0,
+      seatIndex: open.seatIndex,
       drinkSlot,
-      role: "queue",
+      role: open.role,
+      entryFromLeft: true,
     });
-    this.queue.setCustomerAt(0, arrival);
+    this.queue.setCustomerAt(open.seatIndex, arrival);
     this.roster.push(arrival);
+
+    await arrival.animateToSeat(open.seatIndex, SHIFT_DURATION_SEC);
 
     this.busy = false;
     this.onQueueUpdated();
     debugLog("LineAdvance: complete", {
+      spawnSeat: open.seatIndex,
+      spawnRole: open.role,
       activeOrder: this.queue.getActiveCustomer()?.drinkSlot,
       seats: this.queue.allCustomers.map((c) => ({
         seat: c.seatIndex,

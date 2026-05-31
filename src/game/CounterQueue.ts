@@ -1,4 +1,4 @@
-import { ACTIVE_SEAT_INDEX } from "../scene/CounterSeat.ts";
+import { ACTIVE_SEAT_INDEX, type SeatRole } from "../scene/CounterSeat.ts";
 import type { SeatCustomer } from "../scene/SeatCustomer.ts";
 
 /**
@@ -47,5 +47,20 @@ export class CounterQueue {
 
   get allCustomers(): SeatCustomer[] {
     return this.slots.filter((c): c is SeatCustomer => c !== null);
+  }
+
+  /**
+   * Rightmost empty stool (R → C → L) — next customer fills toward Exit first.
+   */
+  findRightmostOpenSeat(): { seatIndex: number; role: SeatRole } | null {
+    for (let seatIndex = ACTIVE_SEAT_INDEX; seatIndex >= 0; seatIndex -= 1) {
+      if (this.slots[seatIndex] === null) {
+        return {
+          seatIndex,
+          role: seatIndex === ACTIVE_SEAT_INDEX ? "active" : "queue",
+        };
+      }
+    }
+    return null;
   }
 }

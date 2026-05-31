@@ -1,6 +1,5 @@
 import type { Scene } from "@babylonjs/core/scene";
 
-import { ACTIVE_SEAT_INDEX } from "../scene/CounterSeat.ts";
 import {
   randomArtMonsterAppearance,
   randomDrinkSlot,
@@ -47,8 +46,9 @@ export class CustomerIntroController {
   }
 
   private async runFirstArrival(): Promise<void> {
-    if (this.queue.getActiveCustomer()) {
-      debugLog("CustomerIntro: skip — active seat already filled");
+    const open = this.queue.findRightmostOpenSeat();
+    if (!open) {
+      debugLog("CustomerIntro: skip — no open seat");
       return;
     }
 
@@ -59,22 +59,23 @@ export class CustomerIntroController {
     debugLog("CustomerIntro: entry start", {
       appearance,
       drinkSlot,
-      targetSeat: ACTIVE_SEAT_INDEX,
+      targetSeat: open.seatIndex,
+      targetRole: open.role,
       entryX: -720,
     });
 
     const customer = new SeatCustomer(this.scene, {
-      seatIndex: ACTIVE_SEAT_INDEX,
+      seatIndex: open.seatIndex,
       drinkSlot,
-      role: "active",
+      role: open.role,
       appearance,
       entryFromLeft: true,
     });
 
-    this.queue.setCustomerAt(ACTIVE_SEAT_INDEX, customer);
+    this.queue.setCustomerAt(open.seatIndex, customer);
     this.roster.push(customer);
 
-    await customer.animateToSeat(ACTIVE_SEAT_INDEX, ENTRY_SLIDE_DURATION_SEC);
+    await customer.animateToSeat(open.seatIndex, ENTRY_SLIDE_DURATION_SEC);
 
     customer.setOrderBubbleStyle("active");
     this.busy = false;
