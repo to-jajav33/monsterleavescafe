@@ -10,6 +10,11 @@ import {
   GAMEOVER_YOURE_FIRED_DISPLAY_SIZE,
   GAMEOVER_YOURE_FIRED_URL,
 } from "./gameOverAssets.ts";
+import {
+  LIVES_HUD_CENTER,
+  LIVES_HUD_SIZE,
+  livesImageUrl,
+} from "./livesAssets.ts";
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
@@ -17,6 +22,7 @@ type OverlayMode = "shiftOver" | "fired" | "stoned";
 
 /** Defeat / shift-end UI with optional boss cutie loop. */
 export class ShiftEndOverlay {
+  private readonly stonedDarken: LayoutPlane;
   private readonly shiftOverTitle: LayoutPlane;
   private readonly firedTitle: LayoutPlane;
   private readonly subtitle: LayoutPlane;
@@ -26,6 +32,21 @@ export class ShiftEndOverlay {
 
   constructor(scene: Scene) {
     this.bossRunner = new BossCutieGameOverRunner(scene);
+
+    this.stonedDarken = new LayoutPlane(scene, {
+      name: "layout_gameover_stoned_darken",
+      center: new Vec2(LIVES_HUD_CENTER.x, LIVES_HUD_CENTER.y),
+      width: LIVES_HUD_SIZE.width,
+      height: LIVES_HUD_SIZE.height,
+      layer: LayoutLayer.ui,
+      depthOffset: LayoutZOffset.livesZeroDarken,
+      alphaIndex: LayoutAlphaIndex.livesZeroDarken + 8,
+      color: new Color3(1, 1, 1),
+      imageUrl: livesImageUrl(0),
+      imageBlend: "alphablend",
+      sortTransparent: true,
+    });
+    this.stonedDarken.mesh.isVisible = false;
 
     this.shiftOverTitle = new LayoutPlane(scene, {
       name: "layout_shift_end_title",
@@ -91,7 +112,9 @@ export class ShiftEndOverlay {
   /** Lose 3 — failed Medusa hide (stoned). */
   showStoned(): void {
     this.mode = "stoned";
-    this.subtitle.updateLabel("You're fired for being stoned! — click to continue");
+    this.subtitle.updateLabel(
+      "You're fired for being stoned! — click to continue",
+    );
     this.applyLayoutPositions();
     this.setVisible(true);
   }
@@ -108,6 +131,7 @@ export class ShiftEndOverlay {
 
   private setVisible(visible: boolean): void {
     this.visible = visible;
+    this.stonedDarken.mesh.isVisible = visible && this.mode === "stoned";
     this.shiftOverTitle.mesh.isVisible = visible && this.mode === "shiftOver";
     this.firedTitle.mesh.isVisible =
       visible && (this.mode === "fired" || this.mode === "stoned");
@@ -125,6 +149,7 @@ export class ShiftEndOverlay {
 
   dispose(): void {
     this.bossRunner.dispose();
+    this.stonedDarken.dispose();
     this.shiftOverTitle.dispose();
     this.firedTitle.dispose();
     this.subtitle.dispose();
