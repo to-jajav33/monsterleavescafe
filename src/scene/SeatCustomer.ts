@@ -31,16 +31,14 @@ import {
   medusaOrderBubbleCenter,
   medusaSpriteCenterAtSeat,
 } from "./monsterMedusaAssets.ts";
+import { MONSTER_FRAME_BOTTOM_Y } from "./monsterLayout.ts";
 import {
-  SLIME_DROP_TOWARD_COUNTER,
-  SLIME_FEET_ABOVE_COUNTER,
   SLIME_IDLE_NATIVE,
   SLIME_IDLE_URL,
   slimeOrderBubbleCenter,
   slimeSpriteCenterAtSeat,
 } from "./monsterSlimeAssets.ts";
 import { bubbleCenterBesideMonster } from "./orderBubbleLayout.ts";
-import { COUNTER_TOP_EDGE_Y } from "./sceneAssets.ts";
 import { OrderBubble, type OrderBubbleStyle } from "./OrderBubble.ts";
 import { RageBubble } from "./RageBubble.ts";
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
@@ -196,10 +194,7 @@ export class SeatCustomer {
       },
       ...(art
         ? {
-            feetY:
-              COUNTER_TOP_EDGE_Y +
-              SLIME_FEET_ABOVE_COUNTER -
-              SLIME_DROP_TOWARD_COUNTER,
+            frameBottomY: MONSTER_FRAME_BOTTOM_Y,
             spriteTop: monsterCenter.y + art.native.height / 2,
           }
         : {}),
