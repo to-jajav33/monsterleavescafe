@@ -3,15 +3,19 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 import { Vec2 } from "../utils/math.ts";
 
+import { BossCutieGameOverRunner } from "./BossCutieGameOverRunner.ts";
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 /** Full-frame dim + message when the 3:00 shift ends. */
 export class ShiftEndOverlay {
   private readonly planes: LayoutPlane[] = [];
+  private readonly bossRunner: BossCutieGameOverRunner;
   private visible = false;
 
   constructor(scene: Scene) {
+    this.bossRunner = new BossCutieGameOverRunner(scene);
+
     this.planes.push(
       new LayoutPlane(scene, {
         name: "layout_shift_end_title",
@@ -53,7 +57,7 @@ export class ShiftEndOverlay {
   }
 
   showOutOfLives(): void {
-    this.setMessage("GAME OVER", "No lives left — click to continue");
+    this.setMessage("YOU'RE FIRED", "No lives left — click to continue");
     this.setVisible(true);
   }
 
@@ -67,6 +71,11 @@ export class ShiftEndOverlay {
     for (const plane of this.planes) {
       plane.mesh.isVisible = visible;
     }
+    if (visible) {
+      this.bossRunner.start();
+    } else {
+      this.bossRunner.stop();
+    }
   }
 
   get isVisible(): boolean {
@@ -74,6 +83,7 @@ export class ShiftEndOverlay {
   }
 
   dispose(): void {
+    this.bossRunner.dispose();
     for (const plane of this.planes) {
       plane.dispose();
     }

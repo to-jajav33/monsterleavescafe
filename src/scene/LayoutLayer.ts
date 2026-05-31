@@ -48,6 +48,7 @@ export const LayoutZOffset = {
   jumpScare: 0.08,
   /** image-lives-0.png darken — top of stack (UI layer). */
   livesZeroDarken: 0.1,
+  bossGameOver: 0.11,
 } as const;
 
 /** Transparent-pass sort: higher draws on top within the same rendering group. */
@@ -80,5 +81,7 @@ export const LayoutAlphaIndex = {
   /** image-lives-0 — full-screen darken, above gameplay (below defeat UI). */
   livesZeroDarken: 140,
   shiftEndOverlay: 150,
+  /** Angry boss loop on game-over (above defeat text). */
+  bossGameOver: 155,
   titleMenuButton: 120,
 } as const;
