@@ -55,3 +55,22 @@ export const COUNTER_TOP_CENTER = new Vec2(
   0,
   COUNTER_TOP_EDGE_Y - COUNTER_TOP_HEIGHT / 2,
 );
+
+/** `image-flashlight.png` — decal on under-counter shelf (hide / backroom area). */
+export const FLASHLIGHT_URL = "/assets/image-flashlight.png";
+
+export const FLASHLIGHT_NATIVE = {
+  width: 272,
+  height: 140,
+} as const;
+
+/** Middle shelf on counter front (right alcove, below cream top). */
+export const FLASHLIGHT_SHELF_CENTER = new Vec2(220, -402);
+
+export const FLASHLIGHT_DISPLAY_WIDTH = 96;
+export const FLASHLIGHT_DISPLAY_HEIGHT =
+  FLASHLIGHT_DISPLAY_WIDTH *
+  (FLASHLIGHT_NATIVE.height / FLASHLIGHT_NATIVE.width);
+
+/** Lay diagonally on shelf (asset head is toward bottom-left). */
+export const FLASHLIGHT_ROTATION_Z = -0.42;

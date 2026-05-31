@@ -22,6 +22,7 @@ import {
 } from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
+import { CounterFlashlightDecal } from "./CounterFlashlightDecal.ts";
 import { GhostNpcDecor } from "./GhostNpcDecor.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
 import {
@@ -46,6 +47,7 @@ export class CafeSceneLayout {
   private readonly seatCustomers: SeatCustomer[] = [];
   private menuBoard: MenuBoard | null = null;
   private ghostNpc: GhostNpcDecor | null = null;
+  private flashlightDecal: CounterFlashlightDecal | null = null;
   private gameplay: GameplayController | null = null;
   private readonly updateOrtho: () => void;
 
@@ -72,6 +74,8 @@ export class CafeSceneLayout {
     this.gameplay = null;
     this.ghostNpc?.dispose();
     this.ghostNpc = null;
+    this.flashlightDecal?.dispose();
+    this.flashlightDecal = null;
     this.menuBoard?.dispose();
     this.menuBoard = null;
     for (const customer of this.seatCustomers) {
@@ -115,6 +119,7 @@ export class CafeSceneLayout {
     this.buildSeats();
     this.buildSeatCustomers();
     this.buildCounter();
+    this.buildFlashlightDecal();
     this.buildExitFlow();
     debugLog("CafeSceneLayout.build → creating MenuBoard");
     this.menuBoard = new MenuBoard(this.scene);
@@ -231,6 +236,10 @@ export class CafeSceneLayout {
     for (const config of PHASE1_DEMO_CUSTOMERS) {
       this.seatCustomers.push(new SeatCustomer(this.scene, config));
     }
+  }
+
+  private buildFlashlightDecal(): void {
+    this.flashlightDecal = new CounterFlashlightDecal(this.scene);
   }
 
   private buildExitFlow(): void {

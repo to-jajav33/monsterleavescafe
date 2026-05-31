@@ -33,6 +33,8 @@ export type LayoutPlaneConfig = {
   imageAlphaCutoff?: number;
   /** Overall material alpha for image planes (default 1). */
   imageOpacity?: number;
+  /** Rotation on Z (radians) for decals on shelves / angled props. */
+  rotationZ?: number;
   /** Drawn on the mesh texture — moves/scales with this plane (not screen GUI). */
   label?: string;
   labelFont?: string;
@@ -84,12 +86,15 @@ export class LayoutPlane {
     this.mesh = MeshBuilder.CreatePlane(name, { width, height }, scene);
     const z = layer * 0.1 + depthOffset;
     this.mesh.position = new Vector3(center.x, center.y, z);
+    if (config.rotationZ) {
+      this.mesh.rotation.z = config.rotationZ;
+    }
     this.mesh.renderingGroupId = layer;
     this.mesh.alphaIndex = alphaIndex;
     this.mesh.isPickable = config.pickable ?? false;
     this.applyMaterial();
 
-    if (/layout_scene|layout_counter|layout_ghost|menu|hide|boss/i.test(name)) {
+    if (/layout_scene|layout_counter|layout_ghost|layout_flashlight|menu|hide|boss/i.test(name)) {
       debugLog("LayoutPlane created:", {
         name,
         center: { x: center.x, y: center.y },

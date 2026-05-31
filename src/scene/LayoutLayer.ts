@@ -23,6 +23,8 @@ export const LayoutLayer = {
 export const LayoutZOffset = {
   /** On seats layer → z = 0.29 (above monsters, below order bubbles). */
   counterTop: 0.09,
+  /** Under-counter shelf decals (flashlight on hide shelf). */
+  shelfDecal: 0.095,
   menuBoard: 0,
   menuTitle: 0.01,
   menuSlot: (slot: 1 | 2 | 3) => 0.02 + slot * 0.01,
@@ -35,6 +37,7 @@ export const LayoutAlphaIndex = {
   background: 0,
   ghostNpc: 5,
   counterTop: 10,
+  shelfDecal: 12,
   seatContent: 20,
   menuBoard: 100,
   menuTitle: 101,
