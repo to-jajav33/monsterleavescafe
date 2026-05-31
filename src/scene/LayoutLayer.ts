@@ -65,4 +65,5 @@ export const LayoutAlphaIndex = {
   menuSlot: (slot: 1 | 2 | 3) => 102 + slot,
   hide: 110,
   boss: 111,
+  titleMenuButton: 120,
 } as const;

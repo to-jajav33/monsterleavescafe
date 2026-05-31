@@ -2,13 +2,15 @@ import type { Engine } from "@babylonjs/core/Engines/engine";
 
 import { debugLog } from "../utils/debugLog.ts";
 import { getRequiredCanvas } from "../utils/canvas.ts";
+import { TitleMenuScreen } from "../scene/TitleMenuScreen.ts";
 
 import { GameEngine } from "./GameEngine.ts";
 import { GameScene } from "./GameScene.ts";
 
-/** Top-level game: owns engine, scene, and the render loop. */
+/** Top-level game: title menu → cafe gameplay. */
 export class Game {
   private gameEngine: GameEngine | null = null;
+  private titleMenu: TitleMenuScreen | null = null;
   private gameScene: GameScene | null = null;
 
   constructor(private readonly canvasId: string = "game-canvas") {}
@@ -21,13 +23,36 @@ export class Game {
       canvas.focus();
     });
     this.gameEngine = new GameEngine(canvas);
-    this.gameScene = new GameScene(this.gameEngine);
-    debugLog("Game.start() complete");
+    this.showTitleMenu();
+    debugLog("Game.start() complete — title menu");
 
     const engine = this.gameEngine.engine;
     engine.runRenderLoop(() => {
-      this.gameScene?.render();
+      if (this.titleMenu) {
+        this.titleMenu.render();
+      } else {
+        this.gameScene?.render();
+      }
     });
+  }
+
+  private showTitleMenu(): void {
+    if (!this.gameEngine) return;
+    this.titleMenu?.dispose();
+    this.gameScene?.dispose();
+    this.gameScene = null;
+    this.titleMenu = new TitleMenuScreen(this.gameEngine, {
+      onStart: () => this.beginGameplay(),
+    });
+  }
+
+  private beginGameplay(): void {
+    if (!this.gameEngine) return;
+    debugLog("Game.beginGameplay()");
+    this.titleMenu?.dispose();
+    this.titleMenu = null;
+    this.gameScene = new GameScene(this.gameEngine);
+    debugLog("Game.beginGameplay() complete");
   }
 
   getEngine(): Engine | null {
@@ -36,9 +61,11 @@ export class Game {
 
   dispose(): void {
     debugLog("Game.dispose()");
+    this.titleMenu?.dispose();
     this.gameScene?.dispose();
-    this.gameEngine?.dispose();
+    this.titleMenu = null;
     this.gameScene = null;
+    this.gameEngine?.dispose();
     this.gameEngine = null;
   }
 }

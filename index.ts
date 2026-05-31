@@ -29,6 +29,12 @@ const server = Bun.serve({
       new Response(Bun.file("./assets/image-monster-bigfoot-angry-2.png")),
     "/assets/image-monster-bigfoot-jumpscare-1.png": () =>
       new Response(Bun.file("./assets/image-monster-bigfoot-jumpscare-1.png")),
+    "/assets/image-title-page.png": () =>
+      new Response(Bun.file("./assets/image-title-page.png")),
+    "/assets/image-button-start.png": () =>
+      new Response(Bun.file("./assets/image-button-start.png")),
+    "/assets/image-button-quit.png": () =>
+      new Response(Bun.file("./assets/image-button-quit.png")),
   },
   development: {
     hmr: true,
