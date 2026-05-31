@@ -17,7 +17,7 @@ import {
 import { createContainViewport } from "../utils/containViewport.ts";
 import { DRINK_MENU } from "../game/Drink.ts";
 
-import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
+import type { SeatMarker } from "./CounterSeat.ts";
 import { PHASE1_DEMO_CUSTOMERS, SeatCustomer } from "./SeatCustomer.ts";
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
@@ -239,14 +239,7 @@ export class CafeSceneLayout {
   }
 
   private buildSeats(): void {
-    for (let i = 0; i < 3; i++) {
-      // Full-size monster art covers L/C pads.
-      if (i === 0 || i === 1) {
-        continue;
-      }
-      const role = i === ACTIVE_SEAT_INDEX ? "active" : "queue";
-      this.seatMarkers.push(new SeatMarker(this.scene, { index: i, role }));
-    }
+    // Full-size monster sprites cover seat pads — no SeatMarker planes.
   }
 
   /** Placeholder monsters + static order bubbles (Phase 1 item 3). */

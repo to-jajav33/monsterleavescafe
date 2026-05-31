@@ -66,6 +66,7 @@ export function logSceneMeshes(
     "ghost",
     "slime",
     "medusa",
+    "bigfoot",
   ];
   const matches = scene.meshes.filter((m) =>
     needles.some((n) => m.name.toLowerCase().includes(n.toLowerCase())),

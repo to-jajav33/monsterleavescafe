@@ -100,7 +100,7 @@ export class LayoutPlane {
     this.applyMaterial();
 
     if (
-      /layout_scene|layout_counter|layout_ghost|layout_flashlight|monster_slime|monster_medusa|menu|hide|boss/i.test(
+      /layout_scene|layout_counter|layout_ghost|layout_flashlight|monster_slime|monster_medusa|monster_bigfoot|menu|hide|boss/i.test(
         name,
       )
     ) {

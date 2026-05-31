@@ -23,3 +23,10 @@ export class MedusaMonster extends Monster {
     super(patienceSeconds);
   }
 }
+
+/** Bigfoot customer — active seat (right). */
+export class BigfootMonster extends Monster {
+  constructor(patienceSeconds: number = 22) {
+    super(patienceSeconds);
+  }
+}

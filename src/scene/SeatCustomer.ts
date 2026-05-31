@@ -4,6 +4,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { CustomerRage } from "../game/CustomerRage.ts";
 import { getDrinkBySlot } from "../game/Drink.ts";
 import {
+  BigfootMonster,
   MedusaMonster,
   PlaceholderMonster,
   SlimeMonster,
@@ -18,6 +19,12 @@ import {
 import { Vec2 } from "../utils/math.ts";
 
 import { SEAT_X, type SeatRole } from "./CounterSeat.ts";
+import {
+  BIGFOOT_IDLE_NATIVE,
+  BIGFOOT_IDLE_URL,
+  bigfootOrderBubbleCenter,
+  bigfootSpriteCenterAtSeat,
+} from "./monsterBigfootAssets.ts";
 import {
   MEDUSA_IDLE_NATIVE,
   MEDUSA_IDLE_URL,
@@ -46,7 +53,11 @@ const PLACEHOLDER_HEIGHT = 85;
 const EXIT_X = 720;
 const ORDER_DEPTH = LayoutZOffset.orderBubble;
 
-export type CustomerAppearance = "placeholder" | "slime_idle" | "medusa_idle";
+export type CustomerAppearance =
+  | "placeholder"
+  | "slime_idle"
+  | "medusa_idle"
+  | "bigfoot_idle";
 
 export type SeatCustomerConfig = {
   seatIndex: number;
@@ -65,7 +76,7 @@ type ArtMonsterConfig = {
 };
 
 const ART_MONSTERS: Record<
-  "slime_idle" | "medusa_idle",
+  "slime_idle" | "medusa_idle" | "bigfoot_idle",
   ArtMonsterConfig
 > = {
   slime_idle: {
@@ -84,25 +95,42 @@ const ART_MONSTERS: Record<
     spriteCenterAtSeat: medusaSpriteCenterAtSeat,
     orderBubbleCenter: medusaOrderBubbleCenter,
   },
+  bigfoot_idle: {
+    native: BIGFOOT_IDLE_NATIVE,
+    idleUrl: BIGFOOT_IDLE_URL,
+    meshPrefix: "monster_bigfoot_idle",
+    tint: new Color3(0.48, 0.4, 0.32),
+    spriteCenterAtSeat: bigfootSpriteCenterAtSeat,
+    orderBubbleCenter: bigfootOrderBubbleCenter,
+  },
 };
 
 function defaultAppearance(seatIndex: number): CustomerAppearance {
   if (seatIndex === 0) return "slime_idle";
   if (seatIndex === 1) return "medusa_idle";
+  if (seatIndex === 2) return "bigfoot_idle";
   return "placeholder";
 }
 
 function isArtMonster(
   appearance: CustomerAppearance,
-): appearance is "slime_idle" | "medusa_idle" {
-  return appearance === "slime_idle" || appearance === "medusa_idle";
+): appearance is "slime_idle" | "medusa_idle" | "bigfoot_idle" {
+  return (
+    appearance === "slime_idle" ||
+    appearance === "medusa_idle" ||
+    appearance === "bigfoot_idle"
+  );
 }
 
 /**
  * Customer at a counter seat — art sprite or placeholder + order/rage bubbles.
  */
 export class SeatCustomer {
-  readonly monster: PlaceholderMonster | SlimeMonster | MedusaMonster;
+  readonly monster:
+    | PlaceholderMonster
+    | SlimeMonster
+    | MedusaMonster
+    | BigfootMonster;
   readonly rage: CustomerRage;
   readonly isOccupied = true;
 
@@ -131,6 +159,8 @@ export class SeatCustomer {
       this.monster = new SlimeMonster(28);
     } else if (this.appearance === "medusa_idle") {
       this.monster = new MedusaMonster(28);
+    } else if (this.appearance === "bigfoot_idle") {
+      this.monster = new BigfootMonster(this.isActive ? 22 : 28);
     } else {
       this.monster = new PlaceholderMonster(this.isActive ? 22 : 28);
     }
@@ -406,7 +436,7 @@ export class SeatCustomer {
 export const PHASE1_DEMO_CUSTOMERS: readonly SeatCustomerConfig[] = [
   { seatIndex: 0, drinkSlot: 1, role: "queue", appearance: "slime_idle" },
   { seatIndex: 1, drinkSlot: 2, role: "queue", appearance: "medusa_idle" },
-  { seatIndex: 2, drinkSlot: 3, role: "active", appearance: "placeholder" },
+  { seatIndex: 2, drinkSlot: 3, role: "active", appearance: "bigfoot_idle" },
 ] as const;
 
 export const SPAWN_DRINK_ROTATION: readonly (1 | 2 | 3)[] = [
