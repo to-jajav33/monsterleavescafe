@@ -13,6 +13,7 @@ export class ShiftTimer {
   private remainingSec = SHIFT_DURATION_SEC;
   private displayedSec = -1;
   private ended = false;
+  private paused = false;
   private readonly renderObserver: Observer<Scene>;
 
   constructor(
@@ -31,8 +32,17 @@ export class ShiftTimer {
     return this.ended;
   }
 
+  /** Freeze countdown (e.g. game over overlay). */
+  pause(): void {
+    this.paused = true;
+    this.syncHud();
+    debugLog("ShiftTimer: paused", {
+      remainingSec: this.remainingSec.toFixed(1),
+    });
+  }
+
   private tick(): void {
-    if (this.ended) {
+    if (this.ended || this.paused) {
       return;
     }
 

@@ -69,10 +69,7 @@ export class GameplayController {
     this.applyOrderBubbleStyles();
     this.lives = new LivesController(livesHud);
     this.shiftTimer = new ShiftTimer(scene, shiftTimerHud, () => {
-      this.runLost = true;
-      this.queueSpawn.stop();
-      shiftEndOverlay.show();
-      debugLog("GameplayController: shift ended — input frozen");
+      this.enterGameOver(() => shiftEndOverlay.show());
     });
     this.rage = new RageSystem(
       scene,
@@ -119,6 +116,17 @@ export class GameplayController {
     return this.runLost || this.shiftTimer.isEnded || this.isQueueBusy;
   }
 
+  private enterGameOver(showOverlay: () => void): void {
+    if (this.runLost) {
+      return;
+    }
+    this.runLost = true;
+    this.shiftTimer.pause();
+    this.queueSpawn.stop();
+    showOverlay();
+    debugLog("GameplayController: game over — timer paused");
+  }
+
   private handleRageStrike(customer: SeatCustomer): void {
     if (this.runLost || this.rageStrikeApplied.has(customer)) {
       return;
@@ -134,11 +142,8 @@ export class GameplayController {
 
     globalThis.setTimeout(() => {
       if (outOfLives) {
-        this.runLost = true;
-        this.queueSpawn.stop();
         customer.clearRageOutPresentation();
-        this.shiftEndOverlay.showOutOfLives();
-        debugLog("GameplayController: out of lives — game over");
+        this.enterGameOver(() => this.shiftEndOverlay.showOutOfLives());
         return;
       }
 
