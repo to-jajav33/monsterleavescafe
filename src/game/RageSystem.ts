@@ -22,6 +22,7 @@ export class RageSystem {
     private readonly scene: Scene,
     private readonly queue: CounterQueue,
     private readonly isPaused: () => boolean,
+    private readonly onJumpScare?: (customer: SeatCustomer) => void,
   ) {
     this.renderObserver = scene.onBeforeRenderObservable.add(() => {
       this.tick();
@@ -48,7 +49,9 @@ export class RageSystem {
       }
 
       if (customer.rageAtFull && !customer.rageAngerStarted) {
-        customer.beginRageAnger();
+        customer.beginRageAnger({
+          onJumpScare: () => this.onJumpScare?.(customer),
+        });
         debugLog("RageSystem: 100% rage (anger next phase)", {
           seat: customer.seatIndex,
         });

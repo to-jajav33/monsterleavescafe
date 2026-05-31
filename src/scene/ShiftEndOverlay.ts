@@ -48,7 +48,18 @@ export class ShiftEndOverlay {
   }
 
   show(): void {
+    this.setMessage("SHIFT OVER", "3:00 — click to continue");
     this.setVisible(true);
+  }
+
+  showOutOfLives(): void {
+    this.setMessage("GAME OVER", "No lives left — click to continue");
+    this.setVisible(true);
+  }
+
+  private setMessage(title: string, subtitle: string): void {
+    this.planes[0]?.updateLabel(title);
+    this.planes[1]?.updateLabel(subtitle);
   }
 
   private setVisible(visible: boolean): void {

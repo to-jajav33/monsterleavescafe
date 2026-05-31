@@ -42,13 +42,19 @@ export const LayoutZOffset = {
   hide: 0.05,
   boss: 0.06,
   shiftTimer: 0.04,
+  /** Full-frame lights 1–3 — behind monsters (seats layer). */
+  livesHud: 0.04,
   /** Center-screen jumpscare — above counter, below shift-end overlay. */
   jumpScare: 0.08,
+  /** image-lives-0.png darken — top of stack (UI layer). */
+  livesZeroDarken: 0.1,
 } as const;
 
 /** Transparent-pass sort: higher draws on top within the same rendering group. */
 export const LayoutAlphaIndex = {
   background: 0,
+  /** image-lives-1..3 — above bg, behind monsters & ghost. */
+  livesHud: 4,
   ghostNpc: 5,
   /** Monsters — drawn before counter top within group 2. */
   monsterBody: 5,
@@ -71,6 +77,8 @@ export const LayoutAlphaIndex = {
   shiftTimer: 112,
   /** Rage jumpscare — UI group, over counter (group 2). */
   jumpScare: 125,
-  shiftEndOverlay: 130,
+  /** image-lives-0 — full-screen darken, above gameplay (below defeat UI). */
+  livesZeroDarken: 140,
+  shiftEndOverlay: 150,
   titleMenuButton: 120,
 } as const;

@@ -376,7 +376,7 @@ export class SeatCustomer {
     this.rageBubble?.setRagePercent(this.rage.percent);
   }
 
-  beginRageAnger(): void {
+  beginRageAnger(hooks?: { onJumpScare?: () => void }): void {
     if (this._rageAngerStarted) {
       return;
     }
@@ -399,8 +399,15 @@ export class SeatCustomer {
       onAngerComplete: () => {
         this._rageInAngerWindow = false;
         this._rageOnJumpscare = true;
+        hooks?.onJumpScare?.();
       },
     });
+  }
+
+  /** Dismiss jumpscare overlay and restore idle body at seat. */
+  clearRageOutPresentation(): void {
+    this._rageOnJumpscare = false;
+    this.stopRageAnimation();
   }
 
   mindChangeOrder(nextSlot: 1 | 2 | 3): void {

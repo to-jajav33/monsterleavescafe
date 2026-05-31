@@ -31,6 +31,7 @@ import { MenuBoard } from "./MenuBoard.ts";
 import { CounterFlashlightDecal } from "./CounterFlashlightDecal.ts";
 import { GhostNpcDecor } from "./GhostNpcDecor.ts";
 import { LayoutPlane, type LayoutPlaneConfig } from "./LayoutPlane.ts";
+import { LivesHud } from "./LivesHud.ts";
 import { ShiftEndOverlay } from "./ShiftEndOverlay.ts";
 import { ShiftTimerHud } from "./ShiftTimerHud.ts";
 import {
@@ -61,6 +62,7 @@ export class CafeSceneLayout {
   private flashlightDecal: CounterFlashlightDecal | null = null;
   private gameplay: GameplayController | null = null;
   private shiftTimerHud: ShiftTimerHud | null = null;
+  private livesHud: LivesHud | null = null;
   private shiftEndOverlay: ShiftEndOverlay | null = null;
   private shiftEndPointerObserver: Observer<PointerInfo> | null = null;
   private readonly updateOrtho: () => void;
@@ -99,6 +101,8 @@ export class CafeSceneLayout {
     this.shiftEndOverlay = null;
     this.shiftTimerHud?.dispose();
     this.shiftTimerHud = null;
+    this.livesHud?.dispose();
+    this.livesHud = null;
     this.gameplay?.dispose();
     this.gameplay = null;
     this.ghostNpc?.dispose();
@@ -155,6 +159,7 @@ export class CafeSceneLayout {
     this.buildSeatCustomers();
     this.buildExitFlow();
     this.shiftTimerHud = new ShiftTimerHud(this.scene);
+    this.livesHud = new LivesHud(this.scene);
     this.shiftEndOverlay = new ShiftEndOverlay(this.scene);
     this.bindShiftEndDismiss();
     debugLog("CafeSceneLayout.build → creating MenuBoard");
@@ -169,6 +174,7 @@ export class CafeSceneLayout {
       this.seatCustomers,
       this.shiftTimerHud,
       this.shiftEndOverlay,
+      this.livesHud,
     );
     this.buildHideButton();
     this.buildBossBell();
