@@ -18,9 +18,13 @@ export const LayoutLayer = {
  *
  * Counter **art** uses {@link LayoutLayer.seats} (group 2), not group 3 — Babylon
  * draws transparent PNGs after opaque meshes in the same group, which buried the menu.
- * Group 3 UI always renders after group 2.
+ * Group 3 UI always renders after group 2. Within group 2, use
+ * {@link LayoutAlphaIndex.monsterBody} &lt; {@link LayoutAlphaIndex.counterTop}
+ * &lt; {@link LayoutAlphaIndex.seatContent} so bodies sit behind the bar.
  */
 export const LayoutZOffset = {
+  /** Customer bodies on seats layer → z = 0.27 (behind counter top). */
+  monsterBody: 0.07,
   /** On seats layer → z = 0.29 (above monsters, below order bubbles). */
   counterTop: 0.09,
   /** Under-counter shelf decals (flashlight on hide shelf). */
@@ -36,8 +40,11 @@ export const LayoutZOffset = {
 export const LayoutAlphaIndex = {
   background: 0,
   ghostNpc: 5,
+  /** Monsters — drawn before counter top within group 2. */
+  monsterBody: 5,
   counterTop: 10,
   shelfDecal: 12,
+  /** Order / rage bubbles above counter. */
   seatContent: 20,
   menuBoard: 100,
   menuTitle: 101,

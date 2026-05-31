@@ -15,11 +15,7 @@ import { DRINK_MENU } from "../game/Drink.ts";
 
 import { ACTIVE_SEAT_INDEX, SeatMarker } from "./CounterSeat.ts";
 import { PHASE1_DEMO_CUSTOMERS, SeatCustomer } from "./SeatCustomer.ts";
-import {
-  LayoutAlphaIndex,
-  LayoutLayer,
-  LayoutZOffset,
-} from "./LayoutLayer.ts";
+import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { GameplayController } from "../game/GameplayController.ts";
 import { MenuBoard } from "./MenuBoard.ts";
 import { CounterFlashlightDecal } from "./CounterFlashlightDecal.ts";
@@ -117,8 +113,8 @@ export class CafeSceneLayout {
     this.buildGhostNpc();
     this.buildExitSign();
     this.buildSeats();
-    this.buildSeatCustomers();
     this.buildCounter();
+    this.buildSeatCustomers();
     this.buildFlashlightDecal();
     this.buildExitFlow();
     debugLog("CafeSceneLayout.build → creating MenuBoard");
@@ -222,6 +218,10 @@ export class CafeSceneLayout {
 
   private buildSeats(): void {
     for (let i = 0; i < 3; i++) {
+      // Seat L uses full-size slime art; skip pad label (sprite covers marker).
+      if (i === 0) {
+        continue;
+      }
       const role = i === ACTIVE_SEAT_INDEX ? "active" : "queue";
       this.seatMarkers.push(new SeatMarker(this.scene, { index: i, role }));
     }

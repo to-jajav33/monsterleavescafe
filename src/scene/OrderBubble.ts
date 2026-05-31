@@ -4,7 +4,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Drink } from "../game/Drink.ts";
 import { Vec2 } from "../utils/math.ts";
 
-import { LayoutLayer } from "./LayoutLayer.ts";
+import { LayoutAlphaIndex, LayoutLayer } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 const BUBBLE_SIZE = 88;
@@ -99,6 +99,7 @@ export class OrderBubble {
       height: BUBBLE_SIZE,
       layer: LayoutLayer.seats,
       depthOffset: this.depthOffset,
+      alphaIndex: LayoutAlphaIndex.seatContent,
       color: BUBBLE_COLORS[style],
       label: `${this.drink.slot}\n${this.drink.shortLabel}`,
       labelFont: "bold 13px monospace",

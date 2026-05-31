@@ -11,6 +11,8 @@ const server = Bun.serve({
       new Response(Bun.file("./assets/image-ghost-npc.png")),
     "/assets/image-flashlight.png": () =>
       new Response(Bun.file("./assets/image-flashlight.png")),
+    "/assets/image-monster-slime-idle-1.png": () =>
+      new Response(Bun.file("./assets/image-monster-slime-idle-1.png")),
   },
   development: {
     hmr: true,

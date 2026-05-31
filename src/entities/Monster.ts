@@ -9,3 +9,10 @@ export class PlaceholderMonster extends Monster {
     super(patienceSeconds);
   }
 }
+
+/** Slime customer — queue patience tuned for first playable pass. */
+export class SlimeMonster extends Monster {
+  constructor(patienceSeconds: number = 28) {
+    super(patienceSeconds);
+  }
+}

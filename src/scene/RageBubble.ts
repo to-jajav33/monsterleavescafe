@@ -5,7 +5,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 
 import { Vec2 } from "../utils/math.ts";
 
-import { LayoutLayer } from "./LayoutLayer.ts";
+import { LayoutAlphaIndex, LayoutLayer } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 const BUBBLE_SIZE = 88;
@@ -38,6 +38,7 @@ export class RageBubble {
       height: BUBBLE_SIZE,
       layer: LayoutLayer.seats,
       depthOffset: depthOffset + 0.03,
+      alphaIndex: LayoutAlphaIndex.seatContent,
       color: new Color3(0.92, 0.22, 0.28),
       label: randomRageLabel(),
       labelFont: "bold 15px monospace",

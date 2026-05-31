@@ -3,7 +3,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 
 import { CustomerRage } from "../game/CustomerRage.ts";
 import { getDrinkBySlot } from "../game/Drink.ts";
-import { PlaceholderMonster } from "../entities/Monster.ts";
+import { PlaceholderMonster, SlimeMonster } from "../entities/Monster.ts";
 import { debugLog } from "../utils/debugLog.ts";
 import {
   animateMeshTargets,
@@ -13,31 +13,50 @@ import {
 import { Vec2 } from "../utils/math.ts";
 
 import { SEAT_X, type SeatRole } from "./CounterSeat.ts";
+import {
+  SLIME_DROP_TOWARD_COUNTER,
+  SLIME_FEET_ABOVE_COUNTER,
+  SLIME_IDLE_NATIVE,
+  SLIME_IDLE_URL,
+  slimeOrderBubbleY,
+  slimeSpriteCenterAtSeat,
+} from "./monsterSlimeAssets.ts";
+import { COUNTER_TOP_EDGE_Y } from "./sceneAssets.ts";
 import { OrderBubble, type OrderBubbleStyle } from "./OrderBubble.ts";
 import { RageBubble } from "./RageBubble.ts";
-import { LayoutLayer } from "./LayoutLayer.ts";
+import {
+  LayoutAlphaIndex,
+  LayoutLayer,
+  LayoutZOffset,
+} from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
-const MONSTER_CENTER_Y = 5;
-const BUBBLE_CENTER_Y = 100;
+const PLACEHOLDER_MONSTER_CENTER_Y = 5;
+const PLACEHOLDER_BUBBLE_CENTER_Y = 100;
+const PLACEHOLDER_WIDTH = 72;
+const PLACEHOLDER_HEIGHT = 85;
 const EXIT_X = 720;
 const ORDER_DEPTH = 0.12;
+
+export type CustomerAppearance = "placeholder" | "slime_idle";
 
 export type SeatCustomerConfig = {
   seatIndex: number;
   drinkSlot: 1 | 2 | 3;
   role: SeatRole;
+  appearance?: CustomerAppearance;
 };
 
 /**
- * Placeholder monster + order/rage bubbles at a counter seat.
+ * Customer at a counter seat — placeholder or slime sprite + order/rage bubbles.
  */
 export class SeatCustomer {
-  readonly monster: PlaceholderMonster;
+  readonly monster: PlaceholderMonster | SlimeMonster;
   readonly rage: CustomerRage;
   readonly isOccupied = true;
 
   private readonly scene: Scene;
+  private readonly appearance: CustomerAppearance;
   private readonly planes: LayoutPlane[] = [];
   private orderBubble: OrderBubble | null = null;
   private rageBubble: RageBubble | null = null;
@@ -45,45 +64,92 @@ export class SeatCustomer {
   private _role: SeatRole;
   private _drinkSlot: 1 | 2 | 3;
   private _rageAngerStarted = false;
-
   constructor(scene: Scene, config: SeatCustomerConfig) {
     this.scene = scene;
     this._seatIndex = config.seatIndex;
     this._drinkSlot = config.drinkSlot;
     this._role = config.role;
+    this.appearance =
+      config.appearance ??
+      (config.seatIndex === 0 ? "slime_idle" : "placeholder");
 
-    const x = SEAT_X[this._seatIndex]!;
+    const seatX = SEAT_X[this._seatIndex]!;
     const drink = getDrinkBySlot(this._drinkSlot);
-    this.monster = new PlaceholderMonster(
-      this.isActive ? 22 : 28,
-    );
+
+    if (this.appearance === "slime_idle") {
+      this.monster = new SlimeMonster(28);
+    } else {
+      this.monster = new PlaceholderMonster(this.isActive ? 22 : 28);
+    }
+
+    const { monster: monsterCenter, bubble: orderBubbleCenter } =
+      this.centersForSeat(this._seatIndex);
+
     this.rage = new CustomerRage(this.monster.patienceSeconds);
 
     debugLog("SeatCustomer", {
       seat: this._seatIndex,
       role: config.role,
+      appearance: this.appearance,
       order: drink.shortLabel,
       patience: this.monster.patienceSeconds,
+      monsterCenter: {
+        x: monsterCenter.x,
+        y: monsterCenter.y,
+      },
+      orderBubbleCenter: {
+        x: orderBubbleCenter.x,
+        y: orderBubbleCenter.y,
+      },
+      ...(this.appearance === "slime_idle"
+        ? {
+            slimeSize: SLIME_IDLE_NATIVE,
+            feetY:
+              COUNTER_TOP_EDGE_Y +
+              SLIME_FEET_ABOVE_COUNTER -
+              SLIME_DROP_TOWARD_COUNTER,
+            spriteTop:
+              monsterCenter.y + SLIME_IDLE_NATIVE.height / 2,
+          }
+        : {}),
     });
 
-    this.planes.push(
-      new LayoutPlane(scene, {
-        name: `monster_body_${this._seatIndex}_${drink.slot}`,
-        center: new Vec2(x, MONSTER_CENTER_Y),
-        width: 72,
-        height: 85,
-        layer: LayoutLayer.seats,
-        depthOffset: 0.08,
-        color: new Color3(0.38, 0.34, 0.48),
-        label: "◉",
-        labelFont: "bold 36px monospace",
-        labelTextColor: "#c8b8e8",
-      }),
-    );
+    if (this.appearance === "slime_idle") {
+      this.planes.push(
+        new LayoutPlane(scene, {
+          name: `monster_slime_idle_${this._seatIndex}`,
+          center: monsterCenter,
+          width: SLIME_IDLE_NATIVE.width,
+          height: SLIME_IDLE_NATIVE.height,
+          layer: LayoutLayer.seats,
+          depthOffset: LayoutZOffset.monsterBody,
+          alphaIndex: LayoutAlphaIndex.monsterBody,
+          color: new Color3(0.45, 0.72, 0.42),
+          imageUrl: SLIME_IDLE_URL,
+          imageBlend: "alphablend",
+        }),
+      );
+    } else {
+      this.planes.push(
+        new LayoutPlane(scene, {
+          name: `monster_body_${this._seatIndex}_${drink.slot}`,
+          center: monsterCenter,
+          width: PLACEHOLDER_WIDTH,
+          height: PLACEHOLDER_HEIGHT,
+          layer: LayoutLayer.seats,
+          depthOffset: LayoutZOffset.monsterBody,
+          alphaIndex: LayoutAlphaIndex.monsterBody,
+          color: new Color3(0.38, 0.34, 0.48),
+          label: "◉",
+          labelFont: "bold 36px monospace",
+          labelTextColor: "#c8b8e8",
+        }),
+      );
+    }
 
     this.orderBubble = new OrderBubble(
       scene,
-      new Vec2(x, BUBBLE_CENTER_Y),
+      orderBubbleCenter,
       drink,
       `${this._seatIndex}_${drink.slot}`,
       ORDER_DEPTH,
@@ -92,7 +158,7 @@ export class SeatCustomer {
 
     this.rageBubble = new RageBubble(
       scene,
-      new Vec2(x, BUBBLE_CENTER_Y),
+      orderBubbleCenter,
       `${this._seatIndex}_${drink.slot}`,
       ORDER_DEPTH,
     );
@@ -140,7 +206,6 @@ export class SeatCustomer {
     this.rageBubble?.setRagePercent(this.rage.percent);
   }
 
-  /** Called once at 100% rage — burst/strike handled in Phase 3 item 2. */
   beginRageAnger(): void {
     this._rageAngerStarted = true;
   }
@@ -164,57 +229,76 @@ export class SeatCustomer {
     this.orderBubble?.flashMatch();
   }
 
+  private centersForSeat(seatIndex: number): {
+    monster: Vec2;
+    bubble: Vec2;
+  } {
+    const x = SEAT_X[seatIndex]!;
+    if (this.appearance === "slime_idle") {
+      const monster = slimeSpriteCenterAtSeat(x);
+      return {
+        monster,
+        bubble: new Vec2(x, slimeOrderBubbleY(monster)),
+      };
+    }
+    return {
+      monster: new Vec2(x, PLACEHOLDER_MONSTER_CENTER_Y),
+      bubble: new Vec2(x, PLACEHOLDER_BUBBLE_CENTER_Y),
+    };
+  }
+
   getMoveTargets(): MeshMoveTarget[] {
-    const x = SEAT_X[this._seatIndex]!;
+    const { monster, bubble } = this.centersForSeat(this._seatIndex);
     const targets: MeshMoveTarget[] = this.planes.map((plane) => ({
       mesh: plane.mesh,
-      x,
-      y: MONSTER_CENTER_Y,
+      x: monster.x,
+      y: monster.y,
     }));
     if (this.orderBubble) {
       targets.push({
         mesh: this.orderBubble.getMesh(),
-        x,
-        y: BUBBLE_CENTER_Y,
+        x: bubble.x,
+        y: bubble.y,
       });
     }
     if (this.rageBubble) {
       targets.push({
         mesh: this.rageBubble.getMesh(),
-        x,
-        y: BUBBLE_CENTER_Y,
+        x: bubble.x,
+        y: bubble.y,
       });
     }
     return targets;
   }
 
   animateToSeat(seatIndex: number, durationSeconds: number): Promise<void> {
-    const x = SEAT_X[seatIndex]!;
+    const { monster, bubble } = this.centersForSeat(seatIndex);
+
     const targets: MeshMoveTarget[] = this.planes.map((plane) => ({
       mesh: plane.mesh,
-      x,
-      y: MONSTER_CENTER_Y,
+      x: monster.x,
+      y: monster.y,
     }));
     if (this.orderBubble) {
       targets.push({
         mesh: this.orderBubble.getMesh(),
-        x,
-        y: BUBBLE_CENTER_Y,
+        x: bubble.x,
+        y: bubble.y,
       });
     }
     if (this.rageBubble) {
       targets.push({
         mesh: this.rageBubble.getMesh(),
-        x,
-        y: BUBBLE_CENTER_Y,
+        x: bubble.x,
+        y: bubble.y,
       });
     }
     return animateMeshTargets(targets, {
       duration: durationSeconds,
       ease: "power2.inOut",
     }).then(() => {
-      this.orderBubble?.setCenter(x, BUBBLE_CENTER_Y);
-      this.rageBubble?.setCenter(x, BUBBLE_CENTER_Y);
+      this.orderBubble?.setCenter(bubble.x, bubble.y);
+      this.rageBubble?.setCenter(bubble.x, bubble.y);
     });
   }
 
@@ -256,10 +340,9 @@ export class SeatCustomer {
 
 /** Static demo orders for initial counter (L / C / R). */
 export const PHASE1_DEMO_CUSTOMERS: readonly SeatCustomerConfig[] = [
-  { seatIndex: 0, drinkSlot: 1, role: "queue" },
-  { seatIndex: 1, drinkSlot: 2, role: "queue" },
-  { seatIndex: 2, drinkSlot: 3, role: "active" },
+  { seatIndex: 0, drinkSlot: 1, role: "queue", appearance: "slime_idle" },
+  { seatIndex: 1, drinkSlot: 2, role: "queue", appearance: "placeholder" },
+  { seatIndex: 2, drinkSlot: 3, role: "active", appearance: "placeholder" },
 ] as const;
 
-/** Rotating drink slots for window refill at seat L. */
 export const SPAWN_DRINK_ROTATION: readonly (1 | 2 | 3)[] = [1, 3, 2, 1, 2, 3] as const;

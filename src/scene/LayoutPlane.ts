@@ -94,7 +94,11 @@ export class LayoutPlane {
     this.mesh.isPickable = config.pickable ?? false;
     this.applyMaterial();
 
-    if (/layout_scene|layout_counter|layout_ghost|layout_flashlight|menu|hide|boss/i.test(name)) {
+    if (
+      /layout_scene|layout_counter|layout_ghost|layout_flashlight|monster_slime|menu|hide|boss/i.test(
+        name,
+      )
+    ) {
       debugLog("LayoutPlane created:", {
         name,
         center: { x: center.x, y: center.y },
