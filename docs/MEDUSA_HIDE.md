@@ -51,11 +51,11 @@ Authoritative design for the Medusa hide event. Implementation is phased; see [G
 
 ## Implementation slices
 
-1. **State machine + triggers** — `MedusaHideController`, once-per-Medusa, global lock, timers, rage block, body frame swap (no camera/input pulse yet).
-2. **Input** — hold Space + hold/pick Hide; `setPlayerHiding`; early hide.
-3. **Patience pause** — hook in `RageSystem` via controller flag.
-4. **Danger gating** — menu + Boss during danger window only.
-5. **Hide button pulse** — visual on `layout_hide_button`.
+1. **State machine + triggers** — done (`MedusaHideController`).
+2. **Input** — done (`HideHoldController`: Space + Hide button hold → `setPlayerHiding`; hold through resolve).
+3. **Patience pause** — done (`RageSystem` + `isPatiencePausedForHide`).
+4. **Danger gating** — done (menu serve blocked during danger window; Boss not wired yet).
+5. **Hide button pulse** — done (`HideButtonPulse`).
 6. **Medusa eyes art** — replace placeholder angry frame with glow asset.
 7. **Camera pan** — 0.25s vertical on hide/release.
 8. **Stoned overlay** — dedicated copy / art; wire `showStoned()`.

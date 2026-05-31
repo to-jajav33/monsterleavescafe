@@ -172,6 +172,10 @@ export class CafeSceneLayout {
       "CafeSceneLayout.build → MenuBoard planeCount",
       this.menuBoard.planeCount,
     );
+    this.buildHideButton();
+    const hideButtonMesh =
+      this.planes.find((p) => p.mesh.name === "layout_hide_button")?.mesh ??
+      null;
     this.gameplay = new GameplayController(
       this.scene,
       this.menuBoard,
@@ -179,8 +183,8 @@ export class CafeSceneLayout {
       this.shiftTimerHud,
       this.shiftEndOverlay,
       this.livesHud,
+      hideButtonMesh,
     );
-    this.buildHideButton();
     this.wireHideButtonPulse();
     this.buildBossBell();
   }

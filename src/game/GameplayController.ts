@@ -1,5 +1,7 @@
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 
+import { HideHoldController } from "../input/HideHoldController.ts";
 import { SceneInputSystem } from "../input/SceneInputSystem.ts";
 import type { MenuBoard } from "../scene/MenuBoard.ts";
 import type { SeatCustomer } from "../scene/SeatCustomer.ts";
@@ -30,6 +32,7 @@ export class GameplayController {
   private readonly lives: LivesController;
   private readonly rage: RageSystem;
   private readonly medusaHide: MedusaHideController;
+  private readonly hideHold: HideHoldController | null;
   private readonly input: SceneInputSystem;
   private readonly menu: MenuController;
   private readonly shiftEndOverlay: ShiftEndOverlay;
@@ -43,6 +46,7 @@ export class GameplayController {
     shiftTimerHud: ShiftTimerHud,
     shiftEndOverlay: ShiftEndOverlay,
     livesHud: LivesHud,
+    hideButtonMesh: Mesh | null = null,
   ) {
     this.shiftEndOverlay = shiftEndOverlay;
     this.queue = new CounterQueue(customers);
@@ -75,6 +79,9 @@ export class GameplayController {
         this.enterGameOver(() => this.shiftEndOverlay.showStoned());
       },
     });
+    this.hideHold = hideButtonMesh
+      ? new HideHoldController(scene, hideButtonMesh, this.medusaHide)
+      : null;
     this.rage = new RageSystem(
       scene,
       this.queue,
@@ -89,7 +96,7 @@ export class GameplayController {
       this.resolver,
       this.input.map,
       {
-        canServe: () => this.canPlay,
+        canServe: () => this.canServe,
         onServeComplete: (customer) => {
           this.lineAdvance.advanceAfterServe(customer);
         },
@@ -112,6 +119,10 @@ export class GameplayController {
   /** Medusa hide telegraph — drives Hide button glow. */
   get isHideButtonPulsing(): boolean {
     return this.medusaHide.isHideButtonPulsing;
+  }
+
+  private get canServe(): boolean {
+    return this.canPlay && !this.medusaHide.isDangerWindow;
   }
 
   private get canPlay(): boolean {
@@ -179,6 +190,7 @@ export class GameplayController {
     this.queueSpawn.dispose();
     this.shiftTimer.dispose();
     this.menu.dispose();
+    this.hideHold?.dispose();
     this.medusaHide.dispose();
     this.rage.dispose();
     this.input.dispose();

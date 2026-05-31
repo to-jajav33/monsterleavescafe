@@ -28,8 +28,7 @@ export type MedusaHideControllerOptions = {
 };
 
 /**
- * Slice 1 — Medusa hide state machine: arm when active Medusa, run telegraph →
- * reveal → danger → resolve/fail. Input, camera, and button pulse come later.
+ * Medusa hide state machine — telegraph → reveal → danger → resolve / stoned fail.
  */
 export class MedusaHideController {
   private phase: MedusaHidePhase = "idle";
@@ -217,6 +216,10 @@ export class MedusaHideController {
         }
         break;
       case "resolve":
+        if (!this.playerHiding) {
+          this.failStoned();
+          return;
+        }
         if (this.phaseElapsed >= MEDUSA_HIDE_EYES_COOLDOWN_SEC) {
           this.completeEvent();
         }
