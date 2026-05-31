@@ -13,7 +13,7 @@ export const MEDUSA_IDLE_NATIVE = {
 export const MEDUSA_IDLE_FRAMES = {
   idle: MEDUSA_IDLE_URL,
   angry1: "/assets/image-monster-medusa-angry-1.png",
-  angry2: "/assets/image-monster-medusa-angry-2.png",
+  jumpScare: "/assets/image-monster-medusa-jumpscare-2.png",
   stone: "/assets/image-monster-medusa-stone-1.png",
 } as const;
 

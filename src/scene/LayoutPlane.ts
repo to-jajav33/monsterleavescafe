@@ -124,6 +124,23 @@ export class LayoutPlane {
     return this.config.center.clone();
   }
 
+  /** Swap the diffuse texture (image planes only). */
+  setImageUrl(url: string): void {
+    if (!this.config.imageUrl) {
+      return;
+    }
+    const mat = this.mesh.material as StandardMaterial | null;
+    if (!mat) {
+      return;
+    }
+    this.imageTexture?.dispose();
+    const tex = this.createImageTexture(url);
+    this.imageTexture = tex;
+    mat.diffuseTexture = tex;
+    mat.emissiveTexture = tex;
+    this.config.imageUrl = url;
+  }
+
   /** Redraw label text (no-op if this plane has no label texture). */
   updateLabel(text: string): void {
     if (!this.labelTexture) {
@@ -161,49 +178,7 @@ export class LayoutPlane {
 
     if (this.config.imageUrl) {
       const blend = this.config.imageBlend ?? "alphablend";
-      const url = this.config.imageUrl;
-
-      const tex = new Texture(url, this.scene, {
-        invertY: true,
-        onLoad: () => {
-          const size = tex.getSize();
-          const planeW = this.config.width;
-          const planeH = this.config.height;
-          const widthMatch = size.width === planeW;
-          const heightMatch = size.height === planeH;
-          const payload: Record<string, unknown> = {
-            mesh: this.config.name,
-            url,
-            texturePixels: { width: size.width, height: size.height },
-            planeWorldUnits: { width: planeW, height: planeH },
-            pixelsMatchPlaneUnits: widthMatch && heightMatch,
-            widthRatio: planeW > 0 ? size.width / planeW : null,
-            blend,
-          };
-          if (
-            /monster|slime|seat_|layout_ghost/i.test(this.config.name) &&
-            (!widthMatch || !heightMatch)
-          ) {
-            debugWarn(
-              "LayoutPlane texture px size ≠ plane world size (stretch or wrong pitch):",
-              payload,
-            );
-          } else {
-            debugLog("LayoutPlane texture loaded:", payload);
-          }
-        },
-        onError: (_message, exception) => {
-          debugWarn("LayoutPlane texture FAILED:", {
-            mesh: this.config.name,
-            url,
-            exception,
-          });
-        },
-      });
-      tex.hasAlpha = true;
-      tex.wrapU = Texture.CLAMP_ADDRESSMODE;
-      tex.wrapV = Texture.CLAMP_ADDRESSMODE;
-      this.imageTexture = tex;
+      const tex = this.createImageTexture(this.config.imageUrl);
       mat.diffuseTexture = tex;
       mat.emissiveTexture = tex;
       mat.diffuseColor = Color3.White();
@@ -233,6 +208,52 @@ export class LayoutPlane {
     }
 
     this.mesh.material = mat;
+  }
+
+  private createImageTexture(url: string): Texture {
+    const blend = this.config.imageBlend ?? "alphablend";
+    const tex = new Texture(url, this.scene, {
+      invertY: true,
+      onLoad: () => {
+        const size = tex.getSize();
+        const planeW = this.config.width;
+        const planeH = this.config.height;
+        const widthMatch = size.width === planeW;
+        const heightMatch = size.height === planeH;
+        const payload: Record<string, unknown> = {
+          mesh: this.config.name,
+          url,
+          texturePixels: { width: size.width, height: size.height },
+          planeWorldUnits: { width: planeW, height: planeH },
+          pixelsMatchPlaneUnits: widthMatch && heightMatch,
+          widthRatio: planeW > 0 ? size.width / planeW : null,
+          blend,
+        };
+        if (
+          /monster|slime|seat_|layout_ghost/i.test(this.config.name) &&
+          (!widthMatch || !heightMatch)
+        ) {
+          debugWarn(
+            "LayoutPlane texture px size ≠ plane world size (stretch or wrong pitch):",
+            payload,
+          );
+        } else {
+          debugLog("LayoutPlane texture loaded:", payload);
+        }
+      },
+      onError: (_message, exception) => {
+        debugWarn("LayoutPlane texture FAILED:", {
+          mesh: this.config.name,
+          url,
+          exception,
+        });
+      },
+    });
+    tex.hasAlpha = true;
+    tex.wrapU = Texture.CLAMP_ADDRESSMODE;
+    tex.wrapV = Texture.CLAMP_ADDRESSMODE;
+    this.imageTexture = tex;
+    return tex;
   }
 
   private createLabelTexture(): DynamicTexture {

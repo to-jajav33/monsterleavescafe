@@ -48,6 +48,12 @@ import {
   slimeSpriteCenterAtSeat,
 } from "./monsterSlimeAssets.ts";
 import { bubbleCenterBesideMonster } from "./orderBubbleLayout.ts";
+import {
+  monsterRageFrames,
+  playMonsterRageOut,
+  restoreMonsterIdle,
+  type RageOutPlayback,
+} from "./monsterRageAnimation.ts";
 import { OrderBubble, type OrderBubbleStyle } from "./OrderBubble.ts";
 import { RageBubble } from "./RageBubble.ts";
 import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
@@ -167,12 +173,16 @@ export class SeatCustomer {
   private readonly scene: Scene;
   private readonly appearance: CustomerAppearance;
   private readonly planes: LayoutPlane[] = [];
+  private monsterBodyPlane: LayoutPlane | null = null;
   private orderBubble: OrderBubble | null = null;
   private rageBubble: RageBubble | null = null;
   private _seatIndex: number;
   private _role: SeatRole;
   private _drinkSlot: 1 | 2 | 3;
   private _rageAngerStarted = false;
+  private _rageInAngerWindow = false;
+  private _rageOnJumpscare = false;
+  private ragePlayback: RageOutPlayback | null = null;
 
   constructor(scene: Scene, config: SeatCustomerConfig) {
     this.scene = scene;
@@ -234,20 +244,20 @@ export class SeatCustomer {
     });
 
     if (art) {
-      this.planes.push(
-        new LayoutPlane(scene, {
-          name: `${art.meshPrefix}_${this._seatIndex}`,
-          center: monsterCenter,
-          width: art.native.width,
-          height: art.native.height,
-          layer: LayoutLayer.seats,
-          depthOffset: monsterBodyZOffsetForSeat(this._seatIndex),
-          alphaIndex: monsterBodyAlphaIndexForSeat(this._seatIndex),
-          color: art.tint,
-          imageUrl: art.idleUrl,
-          imageBlend: "alphablend",
-        }),
-      );
+      const bodyPlane = new LayoutPlane(scene, {
+        name: `${art.meshPrefix}_${this._seatIndex}`,
+        center: monsterCenter,
+        width: art.native.width,
+        height: art.native.height,
+        layer: LayoutLayer.seats,
+        depthOffset: monsterBodyZOffsetForSeat(this._seatIndex),
+        alphaIndex: monsterBodyAlphaIndexForSeat(this._seatIndex),
+        color: art.tint,
+        imageUrl: art.idleUrl,
+        imageBlend: "alphablend",
+      });
+      this.monsterBodyPlane = bodyPlane;
+      this.planes.push(bodyPlane);
       logMonsterBottomAlignment(
         checkMonsterBottomAlignment(
           this.planes[this.planes.length - 1]!.mesh,
@@ -321,6 +331,16 @@ export class SeatCustomer {
     return this._rageAngerStarted;
   }
 
+  /** True during the 0.5s angry flip — Boss forgive window (GAME_SCOPE). */
+  get isInRageAngerWindow(): boolean {
+    return this._rageInAngerWindow;
+  }
+
+  /** True after angry phase until idle restore (jumpscare held). */
+  get isOnRageJumpscare(): boolean {
+    return this._rageOnJumpscare;
+  }
+
   setSeat(seatIndex: number, role: SeatRole): void {
     this._seatIndex = seatIndex;
     this._role = role;
@@ -345,7 +365,29 @@ export class SeatCustomer {
   }
 
   beginRageAnger(): void {
+    if (this._rageAngerStarted) {
+      return;
+    }
     this._rageAngerStarted = true;
+    this._rageInAngerWindow = true;
+
+    const frames = monsterRageFrames(this.appearance);
+    const body = this.monsterBodyPlane;
+    if (!frames || !body) {
+      this._rageInAngerWindow = false;
+      debugLog("SeatCustomer.beginRageAnger: no art body", {
+        appearance: this.appearance,
+      });
+      return;
+    }
+
+    this.ragePlayback?.cancel();
+    this.ragePlayback = playMonsterRageOut(body, frames, {
+      onAngerComplete: () => {
+        this._rageInAngerWindow = false;
+        this._rageOnJumpscare = true;
+      },
+    });
   }
 
   mindChangeOrder(nextSlot: 1 | 2 | 3): void {
@@ -358,9 +400,21 @@ export class SeatCustomer {
   }
 
   resetRage(): void {
+    this.stopRageAnimation();
     this.rage.reset();
     this._rageAngerStarted = false;
+    this._rageInAngerWindow = false;
+    this._rageOnJumpscare = false;
     this.rageBubble?.setRagePercent(0);
+  }
+
+  private stopRageAnimation(): void {
+    this.ragePlayback?.cancel();
+    this.ragePlayback = null;
+    const frames = monsterRageFrames(this.appearance);
+    if (frames && this.monsterBodyPlane) {
+      restoreMonsterIdle(this.monsterBodyPlane, frames);
+    }
   }
 
   flashServeMatch(): void {
@@ -480,7 +534,9 @@ export class SeatCustomer {
   }
 
   dispose(): void {
+    this.stopRageAnimation();
     killMeshTweens(this.getAnimMeshes());
+    this.monsterBodyPlane = null;
     this.rageBubble?.dispose();
     this.rageBubble = null;
     this.orderBubble?.dispose();
