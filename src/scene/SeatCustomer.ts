@@ -5,6 +5,7 @@ import { CustomerRage } from "../game/CustomerRage.ts";
 import { getDrinkBySlot } from "../game/Drink.ts";
 import { PlaceholderMonster, SlimeMonster } from "../entities/Monster.ts";
 import { debugLog } from "../utils/debugLog.ts";
+import { horizSpan } from "../utils/seatLayoutDebug.ts";
 import {
   animateMeshTargets,
   killMeshTweens,
@@ -24,11 +25,7 @@ import {
 import { COUNTER_TOP_EDGE_Y } from "./sceneAssets.ts";
 import { OrderBubble, type OrderBubbleStyle } from "./OrderBubble.ts";
 import { RageBubble } from "./RageBubble.ts";
-import {
-  LayoutAlphaIndex,
-  LayoutLayer,
-  LayoutZOffset,
-} from "./LayoutLayer.ts";
+import { LayoutAlphaIndex, LayoutLayer, LayoutZOffset } from "./LayoutLayer.ts";
 import { LayoutPlane } from "./LayoutPlane.ts";
 
 const PLACEHOLDER_MONSTER_CENTER_Y = 5;
@@ -87,29 +84,36 @@ export class SeatCustomer {
 
     this.rage = new CustomerRage(this.monster.patienceSeconds);
 
-    debugLog("SeatCustomer", {
+    const horizontalSpan =
+      this.appearance === "slime_idle"
+        ? horizSpan(seatX, SLIME_IDLE_NATIVE.width)
+        : horizSpan(seatX, PLACEHOLDER_WIDTH);
+
+    debugLog("SeatCustomer.create", {
       seat: this._seatIndex,
+      seatName: ["L", "C", "R"][this._seatIndex],
       role: config.role,
       appearance: this.appearance,
       order: drink.shortLabel,
       patience: this.monster.patienceSeconds,
-      monsterCenter: {
-        x: monsterCenter.x,
-        y: monsterCenter.y,
-      },
+      seatCenterX: seatX,
+      monsterCenter: { x: monsterCenter.x, y: monsterCenter.y },
       orderBubbleCenter: {
         x: orderBubbleCenter.x,
         y: orderBubbleCenter.y,
       },
+      horizontalSpan,
+      planeSize:
+        this.appearance === "slime_idle"
+          ? SLIME_IDLE_NATIVE
+          : { width: PLACEHOLDER_WIDTH, height: PLACEHOLDER_HEIGHT },
       ...(this.appearance === "slime_idle"
         ? {
-            slimeSize: SLIME_IDLE_NATIVE,
             feetY:
               COUNTER_TOP_EDGE_Y +
               SLIME_FEET_ABOVE_COUNTER -
               SLIME_DROP_TOWARD_COUNTER,
-            spriteTop:
-              monsterCenter.y + SLIME_IDLE_NATIVE.height / 2,
+            spriteTop: monsterCenter.y + SLIME_IDLE_NATIVE.height / 2,
           }
         : {}),
     });
@@ -345,4 +349,6 @@ export const PHASE1_DEMO_CUSTOMERS: readonly SeatCustomerConfig[] = [
   { seatIndex: 2, drinkSlot: 3, role: "active", appearance: "placeholder" },
 ] as const;
 
-export const SPAWN_DRINK_ROTATION: readonly (1 | 2 | 3)[] = [1, 3, 2, 1, 2, 3] as const;
+export const SPAWN_DRINK_ROTATION: readonly (1 | 2 | 3)[] = [
+  1, 3, 2, 1, 2, 3,
+] as const;

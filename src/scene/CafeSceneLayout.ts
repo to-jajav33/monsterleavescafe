@@ -10,6 +10,10 @@ import {
   logDrawStack,
   logSceneMeshes,
 } from "../utils/sceneDebug.ts";
+import {
+  logSeatLayoutAudit,
+  logSeatLayoutMeshes,
+} from "../utils/seatLayoutDebug.ts";
 import { createContainViewport } from "../utils/containViewport.ts";
 import { DRINK_MENU } from "../game/Drink.ts";
 
@@ -57,6 +61,12 @@ export class CafeSceneLayout {
       debugLog("resize → applyContainLayout");
       this.applyContainLayout();
       logCameraAndCanvas(this.scene, this.camera, this.gameEngine.engine);
+      logSeatLayoutMeshes(
+        this.scene,
+        this.camera,
+        this.gameEngine.engine,
+        "resize",
+      );
     };
     this.gameEngine.onResize(this.updateOrtho);
     this.applyContainLayout();
@@ -140,9 +150,21 @@ export class CafeSceneLayout {
     debugLog("Seat customers:", this.seatCustomers.length);
     debugLog("MenuBoard planeCount:", this.menuBoard?.planeCount ?? "null");
     logCameraAndCanvas(this.scene, this.camera, this.gameEngine.engine);
+    logSeatLayoutAudit(this.scene, this.camera, this.gameEngine.engine, "build");
     logSceneMeshes(this.scene);
     logDrawStack(this.scene);
     debugLog("=== end summary ===");
+
+    // Re-log after textures load (async) — catches px vs plane mismatches.
+    globalThis.setTimeout(() => {
+      debugLog("=== post-texture seat layout (500ms) ===");
+      logSeatLayoutMeshes(
+        this.scene,
+        this.camera,
+        this.gameEngine.engine,
+        "textures-loaded",
+      );
+    }, 500);
   }
 
   /** Full-design backdrop from `assets/image-bg.png`. */

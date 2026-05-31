@@ -139,13 +139,30 @@ export class LayoutPlane {
         invertY: true,
         onLoad: () => {
           const size = tex.getSize();
-          debugLog("LayoutPlane texture loaded:", {
+          const planeW = this.config.width;
+          const planeH = this.config.height;
+          const widthMatch = size.width === planeW;
+          const heightMatch = size.height === planeH;
+          const payload: Record<string, unknown> = {
             mesh: this.config.name,
             url,
-            width: size.width,
-            height: size.height,
+            texturePixels: { width: size.width, height: size.height },
+            planeWorldUnits: { width: planeW, height: planeH },
+            pixelsMatchPlaneUnits: widthMatch && heightMatch,
+            widthRatio: planeW > 0 ? size.width / planeW : null,
             blend,
-          });
+          };
+          if (
+            /monster|slime|seat_|layout_ghost/i.test(this.config.name) &&
+            (!widthMatch || !heightMatch)
+          ) {
+            debugWarn(
+              "LayoutPlane texture px size ≠ plane world size (stretch or wrong pitch):",
+              payload,
+            );
+          } else {
+            debugLog("LayoutPlane texture loaded:", payload);
+          }
         },
         onError: (_message, exception) => {
           debugWarn("LayoutPlane texture FAILED:", {

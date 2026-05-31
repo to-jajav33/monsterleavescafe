@@ -10,6 +10,13 @@ export const SLIME_IDLE_NATIVE = {
   height: 743,
 } as const;
 
+/**
+ * Minimum center-to-center spacing so 1320px-wide slime planes do not overlap.
+ * Wider than {@link DESIGN_WIDTH} — cannot fit three non-overlapping slimes in frame
+ * with Seat R at x=280; use for layout audits, not {@link SEAT_X} stool positions.
+ */
+export const MONSTER_SEAT_PITCH = SLIME_IDLE_NATIVE.width;
+
 /** Gap between counter cream edge and slime feet (design units). */
 export const SLIME_FEET_ABOVE_COUNTER = 4;
 
